@@ -20,6 +20,8 @@ namespace ExtEditor.Editor{
 
             foreach (var parent in selectedFolders)
                 CreateChildren(parent);
+                
+            AssetDatabase.Refresh();
         }
 
         private static void CreateChildren(string parentFolder) {
