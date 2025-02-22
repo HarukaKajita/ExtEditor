@@ -12,7 +12,7 @@ namespace ExtEditor.Editor{
 "Prefabs",
 "Scenes",
 "Scripts",
-"Editor"
+"hou"
         };
 
         [MenuItem("Assets/Create/Folders/AllFolders", false, 22)]

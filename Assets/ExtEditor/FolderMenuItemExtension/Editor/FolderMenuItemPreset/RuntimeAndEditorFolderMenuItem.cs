@@ -3,14 +3,14 @@ using System.Linq;
 using UnityEditor;
 
 namespace ExtEditor.Editor{
-    public class SampleFolderMenuItem {
+    public class RuntimeAndEditorFolderMenuItem {
         private static readonly string[] childrenFolders = new string[] {
 "FolderName1",
 "FolderName2",
 "FolderName3"
         };
 
-        [MenuItem("Assets/Create/Folders/Sample", false, 31)]
+        [MenuItem("Assets/Create/Folders/RuntimeAndEditor", false, 31)]
         public static void CreateFolders() {
             var selectedFolders = Selection
                 .GetFiltered<DefaultAsset>( SelectionMode.Assets )
