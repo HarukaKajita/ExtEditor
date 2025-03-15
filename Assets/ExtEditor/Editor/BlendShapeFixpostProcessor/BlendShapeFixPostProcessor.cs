@@ -2,7 +2,7 @@ using System.Linq;
 using UnityEditor;
 using UnityEngine;
 
-namespace Genera.Common.Scripts.Editor
+namespace ExtEditor.Editor
 {
     public class BlendShapeFrameSorter : AssetPostprocessor
     {
