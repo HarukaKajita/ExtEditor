@@ -15,7 +15,7 @@ namespace ExtEditor.Editor.Texture2DArrayMaker
 		[SerializeField] private bool isValid = false;
 		
 		[ContextMenu("Create or Update Texture2DArray")]
-		private void CreateOrUpdateTexture2DArrayContextMenu()
+		public void CreateOrUpdateTexture2DArrayContextMenu()
 		{
 			
 			try
@@ -29,6 +29,7 @@ namespace ExtEditor.Editor.Texture2DArrayMaker
 				{
 					path = AssetDatabase.GetAssetPath(this).Replace(".asset", "_TexArray.asset");
 					AssetDatabase.CreateAsset(outputTexture, path);
+					outputTexture = AssetDatabase.LoadAssetAtPath<Texture2DArray>(path);
 				}
 				else
 				{
@@ -65,7 +66,6 @@ namespace ExtEditor.Editor.Texture2DArrayMaker
 			
 			for (var i = 0; i < inputTextures.Count; i++)
 				Graphics.CopyTexture(inputTextures[i], 0, 0, textureArray, i, 0);
-				// outputTexture.SetPixels(inputTextures[i].GetPixels(), i);
 				
 			textureArray.Apply();
 			return textureArray;
