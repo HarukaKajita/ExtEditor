@@ -12,13 +12,6 @@ namespace ExtEditor.Editor.ExportPackageConfig
     [CreateAssetMenu(fileName = "ExportPackageConfig", menuName = "Scriptableobject/ExportPackageConfig")]
     public class ExportPackageConfig : ScriptableObject
     {
-        // [Header("Export Settings")]
-        // [Tooltip("出力するパッケージファイル名（.unitypackage 拡張子は不要）")]
-        // public string exportFileName = "NewPackage";
-        //
-        // [Tooltip("出力先のディレクトリパス（Assets からの相対パス）")]
-        // public string exportDirectoryRelativePath = "ExportedPackages";
-
         public string exportPathExpression = "<ProjectPath>/ExportedPackages/<ConfigName>_<Date>";
         
         [FormerlySerializedAs("IncludeDependencies")]
