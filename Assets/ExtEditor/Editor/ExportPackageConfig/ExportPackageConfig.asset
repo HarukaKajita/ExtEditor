@@ -1,0 +1,20 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2264501369ae4454cabb6422ee34623f, type: 3}
+  m_Name: ExportPackageConfig
+  m_EditorClassIdentifier: 
+  exportPathExpression: <ProjectPath>/../../../../Release/ExportedPackages/<ConfigName>
+  includeDependencies: 1
+  excludePackageManagerAssets: 0
+  exportEntryAssets:
+  - {fileID: 5897886265953266890, guid: 333b47899fcadd7479ea3d279770a219, type: 3}
+  - {fileID: 11500000, guid: 2264501369ae4454cabb6422ee34623f, type: 3}

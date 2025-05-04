@@ -19,13 +19,11 @@ namespace ExtEditor.Editor.ExportPackageConfig
         [SerializeField]
         private bool includeDependencies = true;
         
-        [SerializeField]
-        private bool excludePackageManagerAssets = true;
-        
         [Tooltip("含めたいアセットを設定します")]
         [SerializeField]
         public Object[] exportEntryAssets = Array.Empty<Object>();//ユーザが指定するアセット
-        
+        [Tooltip("パッケージに含めないアセットを設定します")]
+        public Object[] excludeAssets = Array.Empty<Object>();//ユーザが指定するアセット
         // フォルダの中身も含めたエントリアセットリスト
         [HideInInspector] private List<Object> _internalEntryAssets = new ();
         // 各エントリーアセットの依存アセットリスト
@@ -73,8 +71,37 @@ namespace ExtEditor.Editor.ExportPackageConfig
             _exportAssetPaths = _exportAssetPaths.Distinct().OrderBy(path=>path).ToList();
             _internalEntryAssets = _internalEntryAssets.Distinct().ToList();
             
+            // 除外アセットを除外する
+            if (excludeAssets.Length > 0)
+            {
+                // excludeAssetsの要素がフォルダならそのフォルダ内のアセットを全て取得
+                var excludeDirectories = excludeAssets
+                    .Where(obj => obj != null)
+                    .Distinct()
+                    .Select(AssetDatabase.GetAssetPath)
+                    .Where(AssetDatabase.IsValidFolder)
+                    .ToArray();
+                var excludeFilesInDirectories = excludeDirectories
+                    .SelectMany(directory => AssetDatabase.FindAssets("", new[] { directory })
+                        .Select(AssetDatabase.GUIDToAssetPath))
+                    .ToArray();
+                var excludePaths = excludeAssets
+                    .Where(obj => obj != null)
+                    .Distinct()
+                    .Select(AssetDatabase.GetAssetPath)
+                    .Where(path => !AssetDatabase.IsValidFolder(path))
+                    .Concat(excludeFilesInDirectories)
+                    .OrderBy(path => path)
+                    .ToArray();
+                _exportAssetPaths = _exportAssetPaths
+                    .Where(path => !excludePaths.Contains(path))
+                    .ToList();
+                _internalEntryAssets = _internalEntryAssets
+                    .Where(asset => !excludePaths.Contains(AssetDatabase.GetAssetPath(asset)))
+                    .ToList();
+            }
+                
             // パッケージマネージャーのアセットを除外する
-            if (excludePackageManagerAssets)
             {
                 _exportAssetPaths = _exportAssetPaths
                     .Where(path => !path.StartsWith("Packages/"))
@@ -170,9 +197,9 @@ namespace ExtEditor.Editor.ExportPackageConfig
                 }
                 
                 EditorGUILayout.PropertyField(serializedObject.FindProperty(nameof(config.includeDependencies)), new GUIContent("依存アセットを含める"));
-                EditorGUILayout.PropertyField(serializedObject.FindProperty(nameof(config.excludePackageManagerAssets)), new GUIContent("PackageManager管理のアセットをの除く"));
                 EditorGUILayout.PropertyField(serializedObject.FindProperty(nameof(config.exportEntryAssets)), new GUIContent("パッケージに含めるアセット"), true);
-                
+                EditorGUILayout.PropertyField(serializedObject.FindProperty(nameof(config.excludeAssets)), new GUIContent("パッケージから除外するアセット"), true);
+                serializedObject.ApplyModifiedProperties();
                 EditorGUILayout.Space();
 
                 if (GUILayout.Button("unitypackageをパッケージを書き出す"))
