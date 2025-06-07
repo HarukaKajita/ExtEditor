@@ -6,7 +6,7 @@ using System.Collections.Generic; // Required for List
 namespace ExtEditor.SelectionDataEditor
 {
     [CustomEditor(typeof(SelectionData))]
-    public class SelectionDataEditor : Editor
+    public class SelectionDataEditor : UnityEditor.Editor
     {
         SerializedProperty selectionModeProp;
         SerializedProperty selectedObjectsProp;
@@ -129,9 +129,9 @@ namespace ExtEditor.SelectionDataEditor
             if (data.selectionMode == SelectionMode.Objects && (data.sourceSelectionData == null || data.sourceSelectionData.Count == 0))
             {
                  if (GUILayout.Button("Set Selection From Current Editor Selection"))
-                {
-                    SetSelectionFromCurrent(data);
-                }
+                 {
+                     SetSelectionFromCurrent(data);
+                 }
             }
             else if (data.selectionMode == SelectionMode.Query)
             {

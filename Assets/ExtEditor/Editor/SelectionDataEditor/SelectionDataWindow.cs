@@ -379,8 +379,7 @@ namespace ExtEditor.SelectionDataEditor
         private void DeleteSelectionData(SelectionData dataToDelete)
         {
             string path = AssetDatabase.GetAssetPath(dataToDelete);
-            Undo.DeleteObjectUndo(dataToDelete); // Correct way to handle asset deletion with Undo
-            // AssetDatabase.DeleteAsset(path) is implicitly handled by Undo.DeleteObjectUndo for ScriptableObjects
+            AssetDatabase.DeleteAsset(path); // is implicitly handled by Undo.DeleteObjectUndo for ScriptableObjects
 
             AssetDatabase.Refresh(); // Refresh after potential deletion
             RefreshSelectionDataList();
