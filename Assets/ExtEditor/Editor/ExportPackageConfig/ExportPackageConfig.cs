@@ -193,7 +193,7 @@ namespace ExtEditor.Editor.ExportPackageConfig
                     // 出力先のディレクトリを作成
                    config.MakeDirectoryIfNotExists(config.ExportFilePath());
                    var directoryName = Path.GetDirectoryName(config.ExportFilePath());
-                    System.Diagnostics.Process.Start("explorer.exe", directoryName);
+                    EditorUtility.RevealInFinder(directoryName);
                 }
                 
                 EditorGUILayout.PropertyField(serializedObject.FindProperty(nameof(config.includeDependencies)), new GUIContent("依存アセットを含める"));
