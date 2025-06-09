@@ -223,8 +223,7 @@ namespace ExtEditor.Editor.CaptureWindow
         {
             string fullPath = Path.Combine(Application.dataPath, outputDirectory.Replace("Assets/", ""));
             Directory.CreateDirectory(fullPath);
-            // EditorUtility.RevealInFinder(fullPath);
-            System.Diagnostics.Process.Start(fullPath);
+            EditorUtility.RevealInFinder(fullPath);
         }
     }
 }
