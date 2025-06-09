@@ -49,6 +49,7 @@ The Capture Window is a Unity editor tool designed to take screenshots from vari
 
 3.  **Perform Capture:**
     *   Click the **"Capture and Save PNG"** button.
+    *   By default, press **Ctrl+Shift+F9** (`Tools > CaptureWindow > Capture & Save`) to grab a screenshot without opening the window. This shortcut can be changed in Unity's Shortcut Manager.
     *   The image will be rendered based on your settings and saved to the specified `Output Directory`.
     *   A confirmation message, including the file path, will be logged in the Unity Console.
 

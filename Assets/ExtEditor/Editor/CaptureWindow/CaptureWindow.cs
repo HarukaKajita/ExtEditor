@@ -1,4 +1,5 @@
 using UnityEditor;
+using UnityEditor.ShortcutManagement;
 using UnityEngine;
 using System;
 using System.IO;
@@ -7,8 +8,9 @@ using System.Collections.Generic;
 
 namespace ExtEditor.Editor.CaptureWindow
 {
-	public class CaptureWindow : EditorWindow
+    public class CaptureWindow : EditorWindow
     {
+        private static CaptureWindow lastInstance;
         private enum CaptureSource
         {
             GameView,
@@ -34,6 +36,7 @@ namespace ExtEditor.Editor.CaptureWindow
 
         private void OnEnable()
         {
+            lastInstance = this;
             UpdateSceneCameras();
             
             // MainCameraを探す
@@ -47,6 +50,14 @@ namespace ExtEditor.Editor.CaptureWindow
 
             // 選択中のカメラのインデックスを設定
             selectedCameraIndex = System.Array.IndexOf(sceneCamera, captureCamera);
+        }
+
+        private void OnDisable()
+        {
+            if (lastInstance == this)
+            {
+                lastInstance = null;
+            }
         }
 
         private void UpdateSceneCameras()
@@ -224,6 +235,22 @@ namespace ExtEditor.Editor.CaptureWindow
             string fullPath = Path.Combine(Application.dataPath, outputDirectory.Replace("Assets/", ""));
             Directory.CreateDirectory(fullPath);
             EditorUtility.RevealInFinder(fullPath);
+        }
+
+        [MenuItem("Tools/CaptureWindow/Capture & Save")]
+        [Shortcut("ExtEditor/CaptureWindow/Capture & Save", KeyCode.F9, ShortcutModifiers.Action | ShortcutModifiers.Shift)]
+        private static void CaptureAndSaveShortcut()
+        {
+            if (lastInstance != null)
+            {
+                lastInstance.CaptureAndSave();
+                return;
+            }
+
+            var temp = CreateInstance<CaptureWindow>();
+            temp.OnEnable();
+            temp.CaptureAndSave();
+            DestroyImmediate(temp);
         }
     }
 }
