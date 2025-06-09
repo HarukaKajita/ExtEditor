@@ -49,6 +49,7 @@
 
 3.  **キャプチャの実行:**
     *   **"Capture and Save PNG"** ボタンをクリックします。
+    *   また、`Tools > CaptureWindow > Capture & Save` （デフォルトのショートカット: **Ctrl+Shift+F9**）からウィンドウを開かずに実行することもできます。ショートカットは Unity の Shortcut Manager から変更できます。
     *   設定に基づいて画像がレンダリングされ、指定された `Output Directory` に保存されます。
     *   ファイルパスを含む確認メッセージがUnityコンソールに記録されます。
 
