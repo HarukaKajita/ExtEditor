@@ -11,7 +11,7 @@ namespace ExtEditor.Editor.CaptureWindow
         /// <summary>
         /// パターンを解決してファイル名を生成
         /// </summary>
-        public static string ResolvePattern(string template, PatternContext context)
+        public static string ResolvePattern(string template, PatternContext context, bool sanitize)
         {
             if (string.IsNullOrEmpty(template))
                 return "capture";
@@ -35,7 +35,10 @@ namespace ExtEditor.Editor.CaptureWindow
             result = result.Replace("<Day>", now.ToString("dd"));
             result = result.Replace("<UnixTime>", ((DateTimeOffset)now).ToUnixTimeSeconds().ToString());
             
-            return CaptureHelper.SanitizeFileName(result);
+            // サニタイズ処理
+            if (sanitize)
+                return CaptureHelper.SanitizeFileName(result);
+            return result;
         }
         
         /// <summary>

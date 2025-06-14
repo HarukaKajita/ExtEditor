@@ -83,7 +83,7 @@ namespace ExtEditor.Editor.CaptureWindow
             try
             {
                 // パターン置換を適用
-                string resolvedDirectory = ResolvePattern(outputDirectory);
+                string resolvedDirectory = ResolvePattern(outputDirectory, false);
                 
                 if (pathMode == PathMode.Absolute)
                 {
@@ -102,7 +102,7 @@ namespace ExtEditor.Editor.CaptureWindow
         }
         
         // パターン置換メソッド
-        private string ResolvePattern(string template)
+        private string ResolvePattern(string template, bool sanitize)
         {
             var context = new PatternContext
             {
@@ -114,7 +114,7 @@ namespace ExtEditor.Editor.CaptureWindow
                 CustomRenderTexture = customRenderTexture
             };
             
-            return PatternResolver.ResolvePattern(template, context);
+            return PatternResolver.ResolvePattern(template, context, sanitize);
         }
         
         // バリデーションメソッド
@@ -125,7 +125,7 @@ namespace ExtEditor.Editor.CaptureWindow
             isOutputPathValid = pathResult.IsValid;
             
             // ファイル名バリデーション
-            string resolvedFileName = ResolvePattern(fileNameTemplate);
+            string resolvedFileName = ResolvePattern(fileNameTemplate, true);
             var fileResult = CaptureValidator.ValidateFileName(resolvedFileName);
             isFileNameValid = fileResult.IsValid;
             
@@ -253,6 +253,8 @@ namespace ExtEditor.Editor.CaptureWindow
             pathMode = (PathMode)EditorGUILayout.EnumPopup(GetText("パス指定方式", "Path Mode"), pathMode);
             if (EditorGUI.EndChangeCheck())
             {
+                UpdateOutputDirectoryForPathMode();
+                
                 ValidateInputs();
             }
             
@@ -433,7 +435,7 @@ namespace ExtEditor.Editor.CaptureWindow
             
             foreach (var pattern in patterns)
             {
-                string example = PatternResolver.ResolvePattern(pattern.Pattern, context);
+                string example = PatternResolver.ResolvePattern(pattern.Pattern, context, true);
                 DrawPatternHelp(pattern.Pattern, example, pattern.GetDescription(currentLanguage));
             }
             
@@ -644,20 +646,8 @@ namespace ExtEditor.Editor.CaptureWindow
                 string fullPath = ResolveOutputPath();
                 Directory.CreateDirectory(fullPath);
 
-                string fileName = ResolvePattern(fileNameTemplate) + ".png";
+                string fileName = ResolvePattern(fileNameTemplate, true) + ".png";
                 string filePath = Path.Combine(fullPath, fileName);
-                
-                // ファイルの上書き確認
-                // if (File.Exists(filePath))
-                // {
-                //     bool overwrite = EditorUtility.DisplayDialog(
-                //         GetText("ファイルが存在します", "File Exists"),
-                //         GetText($"{fileName} は既に存在します。上書きしますか？", $"{fileName} already exists. Overwrite?"),
-                //         GetText("上書き", "Overwrite"),
-                //         GetText("キャンセル", "Cancel"));
-                //         
-                //     if (!overwrite) return null; // キャンセル時はnullを返す
-                // }
                 
                 File.WriteAllBytes(filePath, tex.EncodeToPNG());
                 
@@ -698,6 +688,52 @@ namespace ExtEditor.Editor.CaptureWindow
             catch (Exception ex)
             {
                 Debug.LogError($"{GetText($"フォルダを開けませんでした: {ex.Message}", $"Cannot open folder: {ex.Message}")}");
+            }
+        }
+        
+        // パス指定方式切り替え時の出力フォルダ更新
+        private void UpdateOutputDirectoryForPathMode()
+        {
+            if (string.IsNullOrEmpty(outputDirectory)) return;
+
+            var splits = outputDirectory.Split("<");
+            var baseDirectory = outputDirectory;
+            var patternDirectory = "";
+            if (splits.Length > 1)
+            {
+                // パターンが含まれている場合は分割してベースディレクトリとパターンディレクトリを取得
+                baseDirectory = splits[0];
+                patternDirectory = string.Join("<", splits.Skip(1));
+            }
+            
+            try
+            {
+                if (pathMode == PathMode.Relative)
+                {
+                    // 絶対パスから相対パスに変換
+                    if (Path.IsPathRooted(baseDirectory))
+                    {
+                        string dataPath = Application.dataPath;
+                        if (baseDirectory.StartsWith(dataPath))
+                            baseDirectory = baseDirectory.Substring(dataPath.Length).TrimStart('/', '\\');
+                        else
+                            baseDirectory = Path.GetRelativePath(dataPath, baseDirectory);
+                    }
+                }
+                else
+                {
+                    // 先頭にスラッシュがあるとCombineで意図しない結果になるので先頭のスラッシュを削除
+                    if(Path.IsPathRooted(baseDirectory))
+                        baseDirectory = baseDirectory.TrimStart('/', '\\');
+                    // 相対パスから絶対パスに変換
+                    baseDirectory = Path.GetFullPath(Path.Combine(Application.dataPath, baseDirectory));
+                }
+                outputDirectory = baseDirectory + patternDirectory;
+            }
+            catch
+            {
+                // パス変換に失敗した場合はデフォルト値を設定
+                outputDirectory = pathMode == PathMode.Relative ? "/Captures" : Path.GetFullPath(Path.Combine(Application.dataPath, "/Captures"));
             }
         }
         
@@ -859,7 +895,7 @@ namespace ExtEditor.Editor.CaptureWindow
     {
         public static string SanitizeFileName(string fileName)
         {
-            if (string.IsNullOrEmpty(fileName)) return "capture";
+            if (string.IsNullOrEmpty(fileName)) return "Capture";
             
             char[] invalidChars = Path.GetInvalidFileNameChars();
             foreach (char c in invalidChars)
@@ -874,64 +910,6 @@ namespace ExtEditor.Editor.CaptureWindow
         {
             return path.Replace('\\', Path.DirectorySeparatorChar)
                       .Replace('/', Path.DirectorySeparatorChar);
-        }
-    }
-    
-    // 文字列定数クラス
-    public static class CaptureStrings
-    {
-        public static class Japanese
-        {
-            public const string Title = "PNGキャプチャ";
-            public const string CaptureSource = "キャプチャソース";
-            public const string SceneCameras = "シーンカメラ";
-            public const string TargetCamera = "ターゲットカメラ";
-            public const string RenderTexture = "レンダーテクスチャ";
-            public const string PathMode = "パス指定方式";
-            public const string OutputDirectoryRelative = "出力ディレクトリ (相対パス)";
-            public const string OutputDirectoryAbsolute = "出力ディレクトリ (絶対パス)";
-            public const string ResolvedPath = "解決されたパス";
-            public const string FilenameTemplate = "ファイル名テンプレート";
-            public const string TakeNumber = "テイク番号";
-            public const string FixedTakeDigits = "テイク番号桁数固定";
-            public const string Digits = "桁数";
-            public const string Preview = "プレビュー";
-            public const string IncludeAlpha = "アルファチャンネルを含める";
-            public const string TransparentBackground = "透明背景";
-            public const string AutoIncrementTake = "テイク番号自動インクリメント";
-            public const string AutoRefreshAssets = "キャプチャ後にアセット更新";
-            public const string CaptureAndSave = "キャプチャしてPNG保存";
-            public const string OpenOutputFolder = "出力フォルダを開く";
-            public const string RecentCaptures = "最近のキャプチャ";
-            public const string Show = "表示";
-            public const string Help = "ヘルプ";
-        }
-        
-        public static class English
-        {
-            public const string Title = "PNG Capture";
-            public const string CaptureSource = "Capture Source";
-            public const string SceneCameras = "Scene Cameras";
-            public const string TargetCamera = "Target Camera";
-            public const string RenderTexture = "Render Texture";
-            public const string PathMode = "Path Mode";
-            public const string OutputDirectoryRelative = "Output Directory (Relative)";
-            public const string OutputDirectoryAbsolute = "Output Directory (Absolute)";
-            public const string ResolvedPath = "Resolved Path";
-            public const string FilenameTemplate = "Filename Template";
-            public const string TakeNumber = "Take Number";
-            public const string FixedTakeDigits = "Fixed Take Digits";
-            public const string Digits = "Digits";
-            public const string Preview = "Preview";
-            public const string IncludeAlpha = "Include Alpha Channel";
-            public const string TransparentBackground = "Transparent Background";
-            public const string AutoIncrementTake = "Auto Increment Take";
-            public const string AutoRefreshAssets = "Auto Refresh Assets";
-            public const string CaptureAndSave = "Capture and Save PNG";
-            public const string OpenOutputFolder = "Open Output Folder";
-            public const string RecentCaptures = "Recent Captures";
-            public const string Show = "Show";
-            public const string Help = "Help";
         }
     }
 }

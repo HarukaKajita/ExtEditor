@@ -27,10 +27,10 @@ namespace ExtEditor.Editor.CaptureWindow
             }
             
             // セキュリティチェック
-            if (path.Contains("..") || path.Contains("~"))
-            {
-                return new ValidationResult(false, "危険なパスパターンが検出されました", "Dangerous path pattern detected");
-            }
+            // if (path.Contains("..") || path.Contains("~"))
+            // {
+            //     return new ValidationResult(false, "危険なパスパターンが検出されました", "Dangerous path pattern detected");
+            // }
             
             try
             {
