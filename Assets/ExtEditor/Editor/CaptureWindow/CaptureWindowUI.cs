@@ -244,14 +244,14 @@ namespace ExtEditor.Editor.CaptureWindow
                 
                 // 完全パスプレビュー
                 string fullPathPreview = Path.Combine(state.ResolvedOutputPath, state.PreviewFileName);
-                var pathStyle = new GUIStyle(EditorStyles.miniLabel)
+                var pathStyle = new GUIStyle(EditorStyles.label)
                 {
                     wordWrap = true,
                     normal = { textColor = Color.gray }
                 };
                 
                 EditorGUILayout.BeginVertical("box");
-                EditorGUILayout.LabelField(state.GetText("完全パス", "Full Path"), EditorStyles.miniLabel);
+                EditorGUILayout.LabelField(state.GetText("完全パス", "Full Path"));
                 EditorGUILayout.SelectableLabel(fullPathPreview, pathStyle, GUILayout.MinHeight(EditorGUIUtility.singleLineHeight * 2));
                 EditorGUILayout.EndVertical();
             }
