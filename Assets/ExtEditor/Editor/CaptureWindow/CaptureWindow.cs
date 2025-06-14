@@ -32,7 +32,7 @@ namespace ExtEditor.Editor.CaptureWindow
 
         // 基本設定
         private Camera captureCamera;
-        private string outputDirectory = "../Captures";
+        private string outputDirectory = "/Captures";
         private bool includeAlpha = false;
         private bool useTransparentBackground = false;
         private CaptureSource captureSource = CaptureSource.GameView;
@@ -59,13 +59,13 @@ namespace ExtEditor.Editor.CaptureWindow
         private string lastCapturedFilePath = "";
         
         // 追加機能
-        private bool autoIncrementTake = true;
         private bool useFixedTakeDigits = false;
         private int takeDigits = 3;
         private bool autoRefreshAssets = true;
         private string[] recentCaptures = new string[5];
+        private bool showRecentCaptures = false;
 
-        [MenuItem("Tools/CaptureWindow")]
+        [MenuItem("Tools/CaptureWindow/Open Capture Window")]
         public static void ShowWindow()
         {
             GetWindow<CaptureWindow>("CaptureWindow");
@@ -82,13 +82,16 @@ namespace ExtEditor.Editor.CaptureWindow
         {
             try
             {
+                // パターン置換を適用
+                string resolvedDirectory = ResolvePattern(outputDirectory);
+                
                 if (pathMode == PathMode.Absolute)
                 {
-                    return Path.GetFullPath(outputDirectory);
+                    return Path.GetFullPath(resolvedDirectory);
                 }
                 else
                 {
-                    string relativePath = outputDirectory.StartsWith("Assets/") ? outputDirectory.Substring(7) : outputDirectory.TrimStart('/', '\\');
+                    string relativePath = resolvedDirectory.StartsWith("Assets/") ? resolvedDirectory.Substring(7) : resolvedDirectory.TrimStart('/', '\\');
                     return Path.GetFullPath(Path.Combine(Application.dataPath, relativePath));
                 }
             }
@@ -245,18 +248,24 @@ namespace ExtEditor.Editor.CaptureWindow
             EditorGUILayout.Space();
             
             // パス指定方式
+            EditorGUILayout.BeginHorizontal();
             EditorGUI.BeginChangeCheck();
             pathMode = (PathMode)EditorGUILayout.EnumPopup(GetText("パス指定方式", "Path Mode"), pathMode);
             if (EditorGUI.EndChangeCheck())
             {
                 ValidateInputs();
             }
+            
+            // フォルダ選択ボタン
+            if (GUILayout.Button(new GUIContent(EditorGUIUtility.IconContent("Folder Icon").image, GetText("フォルダ選択", "Select Folder")), GUILayout.Width(30), GUILayout.Height(18)))
+            {
+                SelectOutputFolder();
+            }
+            EditorGUILayout.EndHorizontal();
 
             // 出力ディレクトリ
             EditorGUI.BeginChangeCheck();
-            string directoryLabel = pathMode == PathMode.Relative ? 
-                GetText("出力ディレクトリ (相対パス)", "Output Directory (Relative)") :
-                GetText("出力ディレクトリ (絶対パス)", "Output Directory (Absolute)");
+            string directoryLabel = GetText("出力フォルダ", "Output Directory");
             outputDirectory = EditorGUILayout.TextField(directoryLabel, outputDirectory);
             if (EditorGUI.EndChangeCheck())
             {
@@ -270,7 +279,7 @@ namespace ExtEditor.Editor.CaptureWindow
             }
             else
             {
-                EditorGUILayout.LabelField(GetText("解決されたパス", "Resolved Path"), resolvedOutputPath, EditorStyles.miniLabel);
+                EditorGUILayout.LabelField(GetText("フォルダパス", "Resolved Path"), resolvedOutputPath, EditorStyles.miniLabel);
             }
             
             EditorGUILayout.Space();
@@ -337,10 +346,12 @@ namespace ExtEditor.Editor.CaptureWindow
             EditorGUILayout.Space();
 
             // オプション
-            includeAlpha = EditorGUILayout.Toggle(GetText("アルファチャンネルを含める", "Include Alpha Channel"), includeAlpha);
-            useTransparentBackground = EditorGUILayout.Toggle(GetText("透明背景", "Transparent Background"), useTransparentBackground);
+            includeAlpha = EditorGUILayout.Toggle(GetText("アルファを含める", "Include Alpha Channel"), includeAlpha);
+            useTransparentBackground = EditorGUILayout.Toggle(GetText("背景透過", "Transparent Background"), useTransparentBackground);
 
             EditorGUILayout.Space();
+            
+            autoRefreshAssets = EditorGUILayout.Toggle(GetText("保存後にアセット更新", "Auto Refresh Assets"), autoRefreshAssets);
 
             // ボタン
             EditorGUI.BeginDisabledGroup(!isOutputPathValid || !isFileNameValid);
@@ -357,24 +368,25 @@ namespace ExtEditor.Editor.CaptureWindow
             
             EditorGUILayout.Space();
             
-            // 追加オプション
-            autoIncrementTake = EditorGUILayout.Toggle(GetText("テイク番号自動インクリメント", "Auto Increment Take"), autoIncrementTake);
-            autoRefreshAssets = EditorGUILayout.Toggle(GetText("キャプチャ後にアセット更新", "Auto Refresh Assets"), autoRefreshAssets);
-            
             // 最近のキャプチャ表示
             if (recentCaptures[0] != null)
             {
                 EditorGUILayout.Space();
-                EditorGUILayout.LabelField(GetText("最近のキャプチャ", "Recent Captures"), EditorStyles.boldLabel);
-                for (int i = 0; i < recentCaptures.Length && recentCaptures[i] != null; i++)
+                showRecentCaptures = EditorGUILayout.Foldout(showRecentCaptures, GetText("最近のキャプチャ", "Recent Captures"));
+                if (showRecentCaptures)
                 {
-                    EditorGUILayout.BeginHorizontal();
-                    EditorGUILayout.LabelField(Path.GetFileName(recentCaptures[i]), EditorStyles.miniLabel);
-                    if (GUILayout.Button(GetText("表示", "Show"), GUILayout.Width(50)))
+                    EditorGUI.indentLevel++;
+                    for (int i = 0; i < recentCaptures.Length && recentCaptures[i] != null; i++)
                     {
-                        EditorUtility.RevealInFinder(recentCaptures[i]);
+                        EditorGUILayout.BeginHorizontal();
+                        EditorGUILayout.LabelField(Path.GetFileName(recentCaptures[i]), EditorStyles.miniLabel);
+                        if (GUILayout.Button(GetText("表示", "Show"), GUILayout.Width(50)))
+                        {
+                            EditorUtility.RevealInFinder(recentCaptures[i]);
+                        }
+                        EditorGUILayout.EndHorizontal();
                     }
-                    EditorGUILayout.EndHorizontal();
+                    EditorGUI.indentLevel--;
                 }
             }
             
@@ -436,14 +448,16 @@ namespace ExtEditor.Editor.CaptureWindow
             EditorGUILayout.LabelField(GetText(
                 "アルファチャンネル: 透明情報を含めるPNGを作成\n" +
                 "透明背景: 背景を透明にして撮影\n" +
-                "テイク番号自動インクリメント: 撮影後に自動でテイク番号を増加\n" +
                 "テイク番号桁数固定: テイク番号の桁数を固定（例：001, 0001）\n" +
-                "キャプチャ後にアセット更新: 撮影後にUnityのアセットデータベースを更新",
+                "保存後にアセット更新: 撮影後にUnityのアセットデータベースを更新\n" +
+                "出力フォルダ: パターン置換対応（例：Captures/<Date>）\n" +
+                "フォルダ選択ボタン: パス指定方式の右のアイコンでフォルダ選択",
                 "Alpha Channel: Create PNG with transparency\n" +
                 "Transparent Background: Capture with transparent background\n" +
-                "Auto Increment Take: Automatically increase take number after capture\n" +
                 "Fixed Take Digits: Fix take number digits (e.g., 001, 0001)\n" +
-                "Auto Refresh Assets: Refresh Unity asset database after capture"
+                "Auto Refresh Assets: Refresh Unity asset database after capture\n" +
+                "Output Directory: Pattern replacement supported (e.g., Captures/<Date>)\n" +
+                "Folder Select Button: Click folder icon to select directory"
             ), optionsStyle);
             
             EditorGUILayout.EndVertical();
@@ -484,10 +498,7 @@ namespace ExtEditor.Editor.CaptureWindow
                 // 解像度取得
                 if (!GetCaptureResolution(out int width, out int height))
                 {
-                    EditorUtility.DisplayDialog(
-                        GetText("エラー", "Error"),
-                        GetText("キャプチャ解像度が無効です", "Invalid capture resolution"),
-                        "OK");
+                    Debug.LogError(GetText("キャプチャ解像度が無効です", "Invalid capture resolution"));
                     return;
                 }
 
@@ -520,8 +531,8 @@ namespace ExtEditor.Editor.CaptureWindow
                     AddToRecentCaptures(savedFilePath);
                     lastCapturedFilePath = savedFilePath;
                     
-                    // テイク番号を自動インクリメント
-                    if (autoIncrementTake)
+                    // <Take>パターンが含まれている場合は自動インクリメント
+                    if (fileNameTemplate.Contains("<Take>"))
                     {
                         takeNumber++;
                         ValidateInputs();
@@ -530,11 +541,7 @@ namespace ExtEditor.Editor.CaptureWindow
             }
             catch (Exception ex)
             {
-                Debug.LogError($"Capture Error: {ex.Message}");
-                EditorUtility.DisplayDialog(
-                    GetText("キャプチャエラー", "Capture Error"),
-                    GetText($"撮影に失敗しました: {ex.Message}", $"Capture failed: {ex.Message}"),
-                    "OK");
+                Debug.LogError($"{GetText("キャプチャエラー", "Capture Error")}: {ex.Message}");
             }
             finally
             {
@@ -542,8 +549,8 @@ namespace ExtEditor.Editor.CaptureWindow
                 if (tex != null) DestroyImmediate(tex);
                 if (renderTexture != null)
                 {
+                    RenderTexture.active = null;
                     renderTexture.Release();
-                    DestroyImmediate(renderTexture);
                 }
                 
                 // カメラ状態復元
@@ -558,19 +565,13 @@ namespace ExtEditor.Editor.CaptureWindow
         {
             if (captureCamera == null)
             {
-                EditorUtility.DisplayDialog(
-                    GetText("エラー", "Error"),
-                    GetText("カメラが指定されていません", "Camera is not specified"),
-                    "OK");
+                Debug.LogError($"{GetText("カメラが指定されていません", "Camera is not specified")}");
                 return false;
             }
             
             if (captureSource == CaptureSource.RenderTexture && customRenderTexture == null)
             {
-                EditorUtility.DisplayDialog(
-                    GetText("エラー", "Error"),
-                    GetText("レンダーテクスチャが指定されていません", "RenderTexture is not specified"),
-                    "OK");
+                Debug.LogError($"{GetText("レンダーテクスチャが指定されていません", "RenderTexture is not specified")}");
                 return false;
             }
             
@@ -647,24 +648,20 @@ namespace ExtEditor.Editor.CaptureWindow
                 string filePath = Path.Combine(fullPath, fileName);
                 
                 // ファイルの上書き確認
-                if (File.Exists(filePath))
-                {
-                    bool overwrite = EditorUtility.DisplayDialog(
-                        GetText("ファイルが存在します", "File Exists"),
-                        GetText($"{fileName} は既に存在します。上書きしますか？", $"{fileName} already exists. Overwrite?"),
-                        GetText("上書き", "Overwrite"),
-                        GetText("キャンセル", "Cancel"));
-                        
-                    if (!overwrite) return null; // キャンセル時はnullを返す
-                }
+                // if (File.Exists(filePath))
+                // {
+                //     bool overwrite = EditorUtility.DisplayDialog(
+                //         GetText("ファイルが存在します", "File Exists"),
+                //         GetText($"{fileName} は既に存在します。上書きしますか？", $"{fileName} already exists. Overwrite?"),
+                //         GetText("上書き", "Overwrite"),
+                //         GetText("キャンセル", "Cancel"));
+                //         
+                //     if (!overwrite) return null; // キャンセル時はnullを返す
+                // }
                 
                 File.WriteAllBytes(filePath, tex.EncodeToPNG());
                 
                 Debug.Log(GetText($"PNGを保存しました: {filePath}", $"PNG saved: {filePath}"));
-                EditorUtility.DisplayDialog(
-                    GetText("保存完了", "Save Complete"),
-                    GetText($"ファイルを保存しました:\n{fileName}", $"File saved:\n{fileName}"),
-                    "OK");
                 
                 if (autoRefreshAssets)
                 {
@@ -675,11 +672,7 @@ namespace ExtEditor.Editor.CaptureWindow
             }
             catch (Exception ex)
             {
-                Debug.LogError($"ファイル保存エラー: {ex.Message}");
-                EditorUtility.DisplayDialog(
-                    GetText("保存エラー", "Save Error"),
-                    GetText($"ファイルの保存に失敗しました: {ex.Message}", $"Failed to save file: {ex.Message}"),
-                    "OK");
+                Debug.LogError($"{GetText("保存エラー", "Save Error")}: {ex.Message}");
                 return null; // エラー時はnullを返す
             }
         }
@@ -704,10 +697,40 @@ namespace ExtEditor.Editor.CaptureWindow
             }
             catch (Exception ex)
             {
-                EditorUtility.DisplayDialog(
-                    GetText("エラー", "Error"),
-                    GetText($"フォルダを開けませんでした: {ex.Message}", $"Cannot open folder: {ex.Message}"),
-                    "OK");
+                Debug.LogError($"{GetText($"フォルダを開けませんでした: {ex.Message}", $"Cannot open folder: {ex.Message}")}");
+            }
+        }
+        
+        // フォルダ選択ダイアログ
+        private void SelectOutputFolder()
+        {
+            string selectedPath = EditorUtility.OpenFolderPanel(
+                GetText("出力フォルダを選択", "Select Output Folder"),
+                string.IsNullOrEmpty(outputDirectory) ? Application.dataPath : outputDirectory,
+                ""
+            );
+            
+            if (!string.IsNullOrEmpty(selectedPath))
+            {
+                if (pathMode == PathMode.Relative)
+                {
+                    // 相対パスに変換
+                    string dataPath = Application.dataPath;
+                    if (selectedPath.StartsWith(dataPath))
+                    {
+                        outputDirectory = selectedPath.Substring(dataPath.Length).TrimStart('/', '\\');
+                    }
+                    else
+                    {
+                        outputDirectory = Path.GetRelativePath(dataPath, selectedPath);
+                    }
+                }
+                else
+                {
+                    outputDirectory = selectedPath;
+                }
+                
+                ValidateInputs();
             }
         }
 
@@ -770,8 +793,6 @@ namespace ExtEditor.Editor.CaptureWindow
         public bool GetCurrentUseTransparentBackground() => useTransparentBackground;
         public void SetCurrentUseTransparentBackground(bool use) => useTransparentBackground = use;
         
-        public bool GetCurrentAutoIncrementTake() => autoIncrementTake;
-        public void SetCurrentAutoIncrementTake(bool auto) => autoIncrementTake = auto;
         
         public bool GetCurrentUseFixedTakeDigits() => useFixedTakeDigits;
         public void SetCurrentUseFixedTakeDigits(bool use) 

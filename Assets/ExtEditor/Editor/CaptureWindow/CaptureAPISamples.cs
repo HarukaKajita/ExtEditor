@@ -162,7 +162,6 @@ namespace ExtEditor.Editor.CaptureWindow.Samples
             CaptureAPI.Settings.FileNameTemplate = "Debug_<Name>_<Date>_<Time>_<MilliSec>";
             CaptureAPI.Settings.UseFixedTakeDigits = true;
             CaptureAPI.Settings.TakeDigits = 5;
-            CaptureAPI.Settings.AutoIncrementTake = false;
             CaptureAPI.Settings.AutoRefreshAssets = false;
             
             // プレビュー確認

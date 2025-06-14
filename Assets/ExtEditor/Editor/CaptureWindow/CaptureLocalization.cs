@@ -62,9 +62,10 @@ namespace ExtEditor.Editor.CaptureWindow
             public const string Options = "オプション";
             public const string OptionsText = "アルファチャンネル: 透明情報を含めるPNGを作成\n" +
                                            "透明背景: 背景を透明にして撮影\n" +
-                                           "テイク番号自動インクリメント: 撮影後に自動でテイク番号を増加\n" +
                                            "テイク番号桁数固定: テイク番号の桁数を固定（例：001, 0001）\n" +
-                                           "キャプチャ後にアセット更新: 撮影後にUnityのアセットデータベースを更新";
+                                           "保存後にアセット更新: 撮影後にUnityのアセットデータベースを更新\n" +
+                                           "出力フォルダ: パターン置換対応（例：Captures/<Date>）\n" +
+                                           "フォルダ選択ボタン: パス指定方式の右のアイコンでフォルダ選択";
         }
         
         /// <summary>
@@ -124,9 +125,10 @@ namespace ExtEditor.Editor.CaptureWindow
             public const string Options = "Options";
             public const string OptionsText = "Alpha Channel: Create PNG with transparency\n" +
                                            "Transparent Background: Capture with transparent background\n" +
-                                           "Auto Increment Take: Automatically increase take number after capture\n" +
                                            "Fixed Take Digits: Fix take number digits (e.g., 001, 0001)\n" +
-                                           "Auto Refresh Assets: Refresh Unity asset database after capture";
+                                           "Auto Refresh Assets: Refresh Unity asset database after capture\n" +
+                                           "Output Directory: Pattern replacement supported (e.g., Captures/<Date>)\n" +
+                                           "Folder Select Button: Click folder icon to select directory";
         }
         
         /// <summary>

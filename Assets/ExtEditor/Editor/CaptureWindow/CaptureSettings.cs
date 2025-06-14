@@ -16,7 +16,6 @@ namespace ExtEditor.Editor.CaptureWindow
         
         [Header("テイク番号設定")]
         public int takeNumber = 1;
-        public bool autoIncrementTake = true;
         public bool useFixedTakeDigits = false;
         [Range(1, 10)]
         public int takeDigits = 3;
@@ -58,7 +57,6 @@ namespace ExtEditor.Editor.CaptureWindow
             outputDirectory = "../Captures";
             fileNameTemplate = "Capture_<Date>_<Time>";
             takeNumber = 1;
-            autoIncrementTake = true;
             useFixedTakeDigits = false;
             takeDigits = 3;
             includeAlpha = false;

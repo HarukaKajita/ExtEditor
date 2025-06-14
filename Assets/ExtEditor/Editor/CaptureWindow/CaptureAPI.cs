@@ -88,14 +88,6 @@ namespace ExtEditor.Editor.CaptureWindow
                 set => SetCurrentUseTransparentBackground(value);
             }
             
-            /// <summary>
-            /// テイク番号自動インクリメントフラグを取得/設定
-            /// </summary>
-            public static bool AutoIncrementTake
-            {
-                get => GetCurrentAutoIncrementTake();
-                set => SetCurrentAutoIncrementTake(value);
-            }
             
             /// <summary>
             /// テイク番号桁数固定フラグを取得/設定
@@ -209,17 +201,6 @@ namespace ExtEditor.Editor.CaptureWindow
                 window.SetCurrentUseTransparentBackground(useTransparentBackground);
             }
             
-            private static bool GetCurrentAutoIncrementTake()
-            {
-                var window = GetOrCreateWindow();
-                return window.GetCurrentAutoIncrementTake();
-            }
-            
-            private static void SetCurrentAutoIncrementTake(bool autoIncrementTake)
-            {
-                var window = GetOrCreateWindow();
-                window.SetCurrentAutoIncrementTake(autoIncrementTake);
-            }
             
             private static bool GetCurrentUseFixedTakeDigits()
             {
@@ -361,7 +342,6 @@ namespace ExtEditor.Editor.CaptureWindow
                     TakeNumber = Settings.TakeNumber,
                     IncludeAlpha = Settings.IncludeAlpha,
                     UseTransparentBackground = Settings.UseTransparentBackground,
-                    AutoIncrementTake = Settings.AutoIncrementTake,
                     UseFixedTakeDigits = Settings.UseFixedTakeDigits,
                     TakeDigits = Settings.TakeDigits,
                     AutoRefreshAssets = Settings.AutoRefreshAssets
@@ -377,7 +357,6 @@ namespace ExtEditor.Editor.CaptureWindow
                 Settings.TakeNumber = config.TakeNumber;
                 Settings.IncludeAlpha = config.IncludeAlpha;
                 Settings.UseTransparentBackground = config.UseTransparentBackground;
-                Settings.AutoIncrementTake = config.AutoIncrementTake;
                 Settings.UseFixedTakeDigits = config.UseFixedTakeDigits;
                 Settings.TakeDigits = config.TakeDigits;
                 Settings.AutoRefreshAssets = config.AutoRefreshAssets;
@@ -418,7 +397,6 @@ namespace ExtEditor.Editor.CaptureWindow
                 Settings.TakeNumber = 1;
                 Settings.IncludeAlpha = false;
                 Settings.UseTransparentBackground = false;
-                Settings.AutoIncrementTake = true;
                 Settings.UseFixedTakeDigits = false;
                 Settings.TakeDigits = 3;
                 Settings.AutoRefreshAssets = true;
@@ -460,7 +438,6 @@ namespace ExtEditor.Editor.CaptureWindow
         public int TakeNumber = 1;
         public bool IncludeAlpha = false;
         public bool UseTransparentBackground = false;
-        public bool AutoIncrementTake = true;
         public bool UseFixedTakeDigits = false;
         public int TakeDigits = 3;
         public bool AutoRefreshAssets = true;

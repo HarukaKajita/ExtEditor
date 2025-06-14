@@ -31,9 +31,6 @@ CaptureAPI.Settings.IncludeAlpha = true;
 // 透明背景
 CaptureAPI.Settings.UseTransparentBackground = true;
 
-// テイク番号自動インクリメント
-CaptureAPI.Settings.AutoIncrementTake = false;
-
 // テイク番号桁数固定
 CaptureAPI.Settings.UseFixedTakeDigits = true;
 CaptureAPI.Settings.TakeDigits = 4;
@@ -128,7 +125,6 @@ public class CaptureConfig
     public int TakeNumber;                           // テイク番号
     public bool IncludeAlpha;                        // アルファチャンネル
     public bool UseTransparentBackground;            // 透明背景
-    public bool AutoIncrementTake;                   // 自動インクリメント
     public bool UseFixedTakeDigits;                  // 桁数固定
     public int TakeDigits;                          // 桁数
     public bool AutoRefreshAssets;                   // アセット自動更新
