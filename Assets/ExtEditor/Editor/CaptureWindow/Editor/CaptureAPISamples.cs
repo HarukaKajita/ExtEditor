@@ -11,7 +11,7 @@ namespace ExtEditor.Editor.CaptureWindow.Samples
         /// <summary>
         /// 基本的なキャプチャ例
         /// </summary>
-        [MenuItem("Tools/CaptureWindow/Samples/Basic Capture")]
+        [MenuItem("Tools/ExtEditor/CaptureWindow/APISamples/Basic Capture")]
         public static void BasicCaptureExample()
         {
             // GameViewを簡単にキャプチャ
@@ -22,7 +22,7 @@ namespace ExtEditor.Editor.CaptureWindow.Samples
         /// <summary>
         /// カメラ指定でキャプチャ
         /// </summary>
-        [MenuItem("Tools/CaptureWindow/Samples/Camera Capture")]
+        [MenuItem("Tools/ExtEditor/CaptureWindow/APISamples/Camera Capture")]
         public static void CameraCaptureExample()
         {
             // MainCameraでキャプチャ
@@ -39,7 +39,7 @@ namespace ExtEditor.Editor.CaptureWindow.Samples
         /// <summary>
         /// SceneViewキャプチャ例
         /// </summary>
-        [MenuItem("Tools/CaptureWindow/Samples/SceneView Capture")]
+        [MenuItem("Tools/ExtEditor/CaptureWindow/APISamples/SceneView Capture")]
         public static void SceneViewCaptureExample()
         {
             // SceneViewをキャプチャ
@@ -50,7 +50,7 @@ namespace ExtEditor.Editor.CaptureWindow.Samples
         /// <summary>
         /// カスタム設定でキャプチャ
         /// </summary>
-        [MenuItem("Tools/CaptureWindow/Samples/Custom Config Capture")]
+        [MenuItem("Tools/ExtEditor/CaptureWindow/APISamples/Custom Config Capture")]
         public static void CustomConfigCaptureExample()
         {
             // カスタム設定を作成
@@ -74,7 +74,7 @@ namespace ExtEditor.Editor.CaptureWindow.Samples
         /// <summary>
         /// 設定変更例
         /// </summary>
-        [MenuItem("Tools/CaptureWindow/Samples/Settings Example")]
+        [MenuItem("Tools/ExtEditor/CaptureWindow/APISamples/Settings Example")]
         public static void SettingsExample()
         {
             // 現在の設定を表示
@@ -98,7 +98,7 @@ namespace ExtEditor.Editor.CaptureWindow.Samples
         /// <summary>
         /// バッチキャプチャ例
         /// </summary>
-        [MenuItem("Tools/CaptureWindow/Samples/Batch Capture")]
+        [MenuItem("Tools/ExtEditor/CaptureWindow/APISamples/Batch Capture")]
         public static void BatchCaptureExample()
         {
             // 複数のカメラを順番にキャプチャ
@@ -118,7 +118,7 @@ namespace ExtEditor.Editor.CaptureWindow.Samples
         /// <summary>
         /// RenderTextureキャプチャ例
         /// </summary>
-        [MenuItem("Tools/CaptureWindow/Samples/RenderTexture Capture")]
+        [MenuItem("Tools/ExtEditor/CaptureWindow/APISamples/RenderTexture Capture")]
         public static void RenderTextureCaptureExample()
         {
             // RenderTextureを作成
@@ -152,7 +152,7 @@ namespace ExtEditor.Editor.CaptureWindow.Samples
         /// <summary>
         /// 高度な設定例
         /// </summary>
-        [MenuItem("Tools/CaptureWindow/Samples/Advanced Settings")]
+        [MenuItem("Tools/ExtEditor/CaptureWindow/APISamples/Advanced Settings")]
         public static void AdvancedSettingsExample()
         {
             // デバッグ用の詳細設定
@@ -179,7 +179,7 @@ namespace ExtEditor.Editor.CaptureWindow.Samples
         /// <summary>
         /// エラーハンドリング例
         /// </summary>
-        [MenuItem("Tools/CaptureWindow/Samples/Error Handling")]
+        [MenuItem("Tools/ExtEditor/CaptureWindow/APISamples/Error Handling")]
         public static void ErrorHandlingExample()
         {
             try
@@ -210,7 +210,7 @@ namespace ExtEditor.Editor.CaptureWindow.Samples
         /// <summary>
         /// プリセット作成例
         /// </summary>
-        [MenuItem("Tools/CaptureWindow/Samples/Create Presets")]
+        [MenuItem("Tools/ExtEditor/CaptureWindow/APISamples/Create Presets")]
         public static void CreatePresetsExample()
         {
             // 高品質プリセット
@@ -251,7 +251,7 @@ namespace ExtEditor.Editor.CaptureWindow.Samples
         /// <summary>
         /// ユーティリティ機能例
         /// </summary>
-        [MenuItem("Tools/CaptureWindow/Samples/Utilities")]
+        [MenuItem("Tools/ExtEditor/CaptureWindow/APISamples/Utilities")]
         public static void UtilitiesExample()
         {
             // ウィンドウを開く

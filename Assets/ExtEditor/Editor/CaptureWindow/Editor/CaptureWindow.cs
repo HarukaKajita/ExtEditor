@@ -30,7 +30,7 @@ namespace ExtEditor.Editor.CaptureWindow
         private CaptureCore captureCore;
         private CaptureWindowUI ui;
 
-        [MenuItem("Tools/CaptureWindow/Open Capture Window")]
+        [MenuItem("Tools/ExtEditor/CaptureWindow/Open Capture Window")]
         public static void ShowWindow()
         {
             GetWindow<CaptureWindow>("CaptureWindow");
@@ -263,7 +263,7 @@ namespace ExtEditor.Editor.CaptureWindow
             ValidateInputs();
         }
 
-        [MenuItem("Tools/CaptureWindow/Capture & Save")]
+        [MenuItem("Tools/ExtEditor/CaptureWindow/Capture & Save")]
         [Shortcut("ExtEditor/CaptureWindow/Capture & Save", KeyCode.F9, ShortcutModifiers.Action | ShortcutModifiers.Shift)]
         private static void CaptureAndSaveShortcut()
         {
