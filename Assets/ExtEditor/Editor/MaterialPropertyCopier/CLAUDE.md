@@ -84,3 +84,102 @@ List<Material> targetMaterials; // ターゲットマテリアルリスト
 - **シェーダー互換性**: 同じシェーダーまたは互換性のあるシェーダー間でのみ使用推奨
 - **プロパティ名**: プロパティ名の完全一致が必要
 - **アセットvsプロシージャル**: アセットベースとプロシージャルマテリアル両方に対応
+
+## 現状の課題
+
+### 重要度: High（高）
+- **型安全性の不備**: 無効になったテクスチャ参照の検証なし
+  - **影響**: 削除されたテクスチャを参照してエラーや予期しない動作
+  - **改善提案**: テクスチャ有効性チェックとAssetDatabase.Contains()による検証
+
+- **Undo記録の不整合**: 修正されたマテリアルのみがUndo記録される
+  - **影響**: 一部のマテリアルのみUndo可能で一貫性のない状態
+  - **改善提案**: 全ターゲットマテリアルの事前Undo記録
+
+- **パフォーマンス**: 貼り付け操作時の非効率なプロパティタイプ検索
+  - **影響**: 大量プロパティ処理時の動作遅延
+  - **改善提案**: プロパティタイプのキャッシュ機能実装
+
+### 重要度: Medium（中）
+- **UI応答性**: 大量マテリアル操作時の進捗表示なし
+  - **影響**: 処理中にエディターが固まったように見える
+  - **改善提案**: `EditorUtility.DisplayProgressBar()`による進捗表示
+
+- **メモリ使用量**: コピーしたプロパティが無期限に保存される
+  - **影響**: 長時間使用でメモリ使用量の増加
+  - **改善提案**: プロパティデータの定期的な清理機能
+
+- **エラー回復**: 部分的な失敗で一部マテリアルのみ変更される
+  - **影響**: 予期しない混在状態で一貫性が失われる
+  - **改善提案**: トランザクション的な処理と全体ロールバック機能
+
+### 具体的な改善コード例
+
+```csharp
+// 型安全性向上
+case ShaderUtil.ShaderPropertyType.TexEnv:
+    Texture tex = sourceMaterial.GetTexture(propInfo.propertyName);
+    // テクスチャ有効性検証
+    if (tex != null && AssetDatabase.Contains(tex))
+    {
+        value = tex;
+    }
+    else if (tex != null)
+    {
+        Debug.LogWarning($"テクスチャ {tex.name} は有効なアセットではありません。スキップします。");
+        continue;
+    }
+    break;
+
+// Undo記録の改善
+void PastePropertiesToTargets()
+{
+    // 全ターゲットマテリアルを事前記録
+    var validTargets = targetMaterials.Where(m => m != null).ToArray();
+    if (validTargets.Length == 0)
+    {
+        EditorUtility.DisplayDialog("警告", "有効なターゲットマテリアルがありません", "OK");
+        return;
+    }
+    
+    Undo.RecordObjects(validTargets, "Paste Material Properties");
+    
+    // 進捗表示付きで処理
+    for (int i = 0; i < validTargets.Length; i++)
+    {
+        var targetMat = validTargets[i];
+        
+        EditorUtility.DisplayProgressBar(
+            "プロパティ貼り付け中", 
+            $"{targetMat.name} ({i + 1}/{validTargets.Length})", 
+            (float)i / validTargets.Length);
+            
+        try
+        {
+            PastePropertiesToMaterial(targetMat);
+        }
+        catch (Exception ex)
+        {
+            Debug.LogError($"マテリアル {targetMat.name} への貼り付けに失敗: {ex.Message}");
+        }
+    }
+    
+    EditorUtility.ClearProgressBar();
+}
+
+// プロパティタイプキャッシュ
+private Dictionary<string, ShaderUtil.ShaderPropertyType> _propertyTypeCache = 
+    new Dictionary<string, ShaderUtil.ShaderPropertyType>();
+
+private ShaderUtil.ShaderPropertyType GetCachedPropertyType(Material material, string propertyName)
+{
+    var key = $"{material.shader.name}_{propertyName}";
+    if (!_propertyTypeCache.TryGetValue(key, out var type))
+    {
+        // 実際のタイプ取得処理
+        type = GetPropertyType(material, propertyName);
+        _propertyTypeCache[key] = type;
+    }
+    return type;
+}
+```

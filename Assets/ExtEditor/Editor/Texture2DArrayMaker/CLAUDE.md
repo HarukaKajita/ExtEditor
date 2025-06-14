@@ -109,3 +109,231 @@ Texture2DArrayMakerツールは、複数のTexture2Dアセットを単一のText
 - **自動リサイズ**: 異なるサイズテクスチャの自動リサイズ機能
 - **形式変換**: 自動的なフォーマット統一機能
 - **プレビュー**: アレイ内容のプレビュー表示
+
+## 現状の課題
+
+### 重要度: High（高）
+- **例外処理**: アセット編集操作での清理なしの例外処理
+  - **影響**: 例外発生時にアセットデータベースが不整合状態になる
+  - **改善提案**: try-finallyブロックによる確実な清理処理
+
+- **リソース管理**: TextureArrayオブジェクトの適切な管理不足
+  - **影響**: メモリリークとGPUリソースの無駄遣い
+  - **改善提案**: Disposableパターンと適切なリソース解放
+
+- **検証ロジック**: OnValidateでの副作用と信頼性不足
+  - **影響**: 不正な状態でのアセット操作と予期しない動作
+  - **改善提案**: 副作用のない検証関数への分離
+
+### 重要度: Medium（中）
+- **パフォーマンス**: エラーチェックなしのGraphics.CopyTexture
+  - **影響**: GPU操作失敗の検出困難とデバッグ問題
+  - **改善提案**: 操作結果検証と適切なエラーハンドリング
+
+- **ユーザーエクスペリエンス**: 大きなテクスチャ操作の進捗表示なし
+  - **影響**: 長時間処理でエディターが固まったように見える
+  - **改善提案**: 非同期処理と進捗バー表示
+
+### 具体的な改善コード例
+
+```csharp
+[ContextMenu("Create or Update Texture2DArray")]
+public void CreateOrUpdateTexture2DArrayContextMenu()
+{
+    // 事前検証
+    if (!ValidateTextures())
+    {
+        EditorUtility.DisplayDialog("エラー", "テクスチャの検証に失敗しました", "OK");
+        return;
+    }
+    
+    // 処理時間見積もり
+    int totalPixels = inputTextures.Sum(t => t != null ? t.width * t.height : 0);
+    if (totalPixels > 4 * 1024 * 1024) // 4M pixels
+    {
+        if (!EditorUtility.DisplayDialog("処理時間警告", 
+            "大きなテクスチャアレイの作成には時間がかかります。続行しますか？", 
+            "続行", "キャンセル"))
+            return;
+    }
+    
+    AssetDatabase.StartAssetEditing();
+    Texture2DArray textureArray = null;
+    
+    try
+    {
+        EditorUtility.DisplayProgressBar("テクスチャアレイ作成", "配列を初期化中...", 0f);
+        
+        textureArray = CreateOrUpdateTexture2DArray();
+        if (textureArray == null)
+        {
+            EditorUtility.DisplayDialog("エラー", "テクスチャアレイの作成に失敗しました", "OK");
+            return;
+        }
+        
+        EditorUtility.DisplayProgressBar("テクスチャアレイ作成", "アセットを保存中...", 0.8f);
+        
+        var path = AssetDatabase.GetAssetPath(outputTexture);
+        
+        if (string.IsNullOrEmpty(path))
+        {
+            // 新規作成
+            path = AssetDatabase.GetAssetPath(this).Replace(".asset", "_TexArray.asset");
+            AssetDatabase.CreateAsset(textureArray, path);
+            outputTexture = textureArray;
+        }
+        else
+        {
+            // 既存更新
+            EditorUtility.CopySerialized(textureArray, outputTexture);
+            DestroyImmediate(textureArray); // 一時オブジェクトを削除
+        }
+        
+        EditorUtility.SetDirty(this);
+        
+        Debug.Log($"テクスチャアレイ作成完了: {inputTextures.Count}枚のテクスチャを含む配列");
+        EditorUtility.DisplayDialog("完了", 
+            $"テクスチャアレイを作成しました\nサイズ: {inputTextures[0].width}x{inputTextures[0].height}\n枚数: {inputTextures.Count}", 
+            "OK");
+    }
+    catch (Exception ex)
+    {
+        Debug.LogError($"テクスチャアレイ作成エラー: {ex.Message}");
+        EditorUtility.DisplayDialog("エラー", $"作成に失敗しました: {ex.Message}", "OK");
+        
+        // 一時オブジェクトのクリーンアップ
+        if (textureArray != null)
+            DestroyImmediate(textureArray);
+    }
+    finally
+    {
+        AssetDatabase.StopAssetEditing();
+        AssetDatabase.SaveAssets();
+        AssetDatabase.Refresh();
+        EditorUtility.ClearProgressBar();
+    }
+}
+
+// 副作用のない検証メソッド
+private bool ValidateTextures()
+{
+    validationMessage = "";
+    
+    if (inputTextures == null || inputTextures.Count == 0)
+    {
+        validationMessage = "入力テクスチャが設定されていません";
+        return false;
+    }
+    
+    var validTextures = inputTextures.Where(t => t != null).ToList();
+    if (validTextures.Count == 0)
+    {
+        validationMessage = "有効なテクスチャがありません";
+        return false;
+    }
+    
+    var first = validTextures[0];
+    foreach (var texture in validTextures.Skip(1))
+    {
+        if (texture.width != first.width || texture.height != first.height)
+        {
+            validationMessage = $"テクスチャサイズが一致しません: {texture.name} ({texture.width}x{texture.height}) vs {first.name} ({first.width}x{first.height})";
+            return false;
+        }
+        
+        if (texture.format != first.format)
+        {
+            validationMessage = $"テクスチャフォーマットが一致しません: {texture.name} ({texture.format}) vs {first.name} ({first.format})";
+            return false;
+        }
+    }
+    
+    validationMessage = "検証OK";
+    return true;
+}
+
+// OnValidate修正（副作用除去）
+private void OnValidate()
+{
+    // UI更新のみ、実際の処理は行わない
+    isValid = ValidateTextures();
+}
+
+// 改善されたテクスチャアレイ作成
+private Texture2DArray CreateOrUpdateTexture2DArray()
+{
+    var validTextures = inputTextures.Where(t => t != null).ToArray();
+    if (validTextures.Length == 0) return null;
+    
+    var first = validTextures[0];
+    var textureArray = new Texture2DArray(
+        first.width, 
+        first.height, 
+        validTextures.Length, 
+        first.format, 
+        false);
+    
+    textureArray.name = $"{name}_TextureArray";
+    
+    try
+    {
+        for (int i = 0; i < validTextures.Length; i++)
+        {
+            var texture = validTextures[i];
+            
+            EditorUtility.DisplayProgressBar(
+                "テクスチャアレイ作成", 
+                $"テクスチャをコピー中: {texture.name} ({i + 1}/{validTextures.Length})", 
+                (float)i / validTextures.Length);
+            
+            // エラーチェック付きコピー
+            try
+            {
+                Graphics.CopyTexture(texture, 0, textureArray, i);
+            }
+            catch (Exception ex)
+            {
+                Debug.LogError($"テクスチャコピーエラー {texture.name}: {ex.Message}");
+                throw;
+            }
+        }
+        
+        textureArray.Apply(false);
+        return textureArray;
+    }
+    catch
+    {
+        // エラー時のクリーンアップ
+        if (textureArray != null)
+            DestroyImmediate(textureArray);
+        throw;
+    }
+}
+
+// テクスチャメモリ使用量計算
+private long GetEstimatedMemoryUsage()
+{
+    if (inputTextures.Count == 0) return 0;
+    
+    var first = inputTextures.FirstOrDefault(t => t != null);
+    if (first == null) return 0;
+    
+    long pixelCount = first.width * first.height;
+    int bytesPerPixel = GetBytesPerPixel(first.format);
+    
+    return pixelCount * bytesPerPixel * inputTextures.Count;
+}
+
+private int GetBytesPerPixel(TextureFormat format)
+{
+    switch (format)
+    {
+        case TextureFormat.RGBA32: return 4;
+        case TextureFormat.RGB24: return 3;
+        case TextureFormat.ARGB32: return 4;
+        case TextureFormat.DXT1: return 1; // 圧縮
+        case TextureFormat.DXT5: return 1; // 圧縮
+        default: return 4; // デフォルト推定
+    }
+}
+```

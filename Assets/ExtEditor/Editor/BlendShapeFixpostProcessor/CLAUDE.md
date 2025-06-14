@@ -93,3 +93,160 @@ struct BlendShapeData {
 - **ログ出力**: 処理されたBlendShapeの詳細ログ
 - **設定オプション**: 処理の有効/無効切り替え
 - **統計情報**: 修正されたBlendShapeの統計表示
+
+## 現状の課題
+
+### 重要度: High（高）
+- **メモリ使用量**: 境界チェックなしでの大配列割り当て
+  - **影響**: 大きなメッシュで OutOfMemoryException やエディタークラッシュ
+  - **改善提案**: メッシュサイズ制限と段階的処理
+
+- **パフォーマンス**: フレームソートチェックのO(n²)複雑度（実際はO(n)だが改善余地あり）
+  - **影響**: 大量BlendShapeフレームで処理時間大幅増加
+  - **改善提案**: 効率的なソートアルゴリズムとバイナリ検索
+
+- **データ損失リスク**: バックアップや検証なしでのメッシュ変更
+  - **影響**: 処理失敗時に元データの復元不可
+  - **改善提案**: 処理前のバックアップ作成と検証機能
+
+### 重要度: Medium（中）
+- **エラー回復なし**: 操作失敗時にメッシュが未定義状態に残る
+  - **影響**: 部分的な処理失敗でメッシュが破損状態
+  - **改善提案**: ロールバック機能と整合性チェック
+
+- **サイレント処理**: ユーザーに高コスト処理のフィードバックなし
+  - **影響**: 長時間処理で進捗不明、処理内容不明
+  - **改善提案**: 進捗表示と処理結果の詳細ログ
+
+### 具体的な改善コード例
+
+```csharp
+void OnPostprocessModel(GameObject importedModel)
+{
+    var skinnedMeshRenderers = importedModel.GetComponentsInChildren<SkinnedMeshRenderer>();
+    
+    foreach (var skinnedMeshRenderer in skinnedMeshRenderers)
+    {
+        Mesh mesh = skinnedMeshRenderer.sharedMesh;
+        
+        // 安全性チェック追加
+        if (mesh == null || mesh.blendShapeCount == 0) continue;
+        
+        // メモリ使用量チェック
+        const int maxVertices = 65536; // 一般的な制限
+        if (mesh.vertexCount > maxVertices)
+        {
+            Debug.LogWarning($"大きなメッシュ {mesh.name} ({mesh.vertexCount} 頂点) はスキップされました");
+            continue;
+        }
+        
+        // 処理が必要かチェック（既存のロジック）
+        bool needsFix = NeedsBlendShapeFix(mesh);
+        if (!needsFix) continue;
+        
+        // ユーザー通知
+        Debug.Log($"BlendShape修正中: {mesh.name} ({mesh.blendShapeCount} shapes)");
+        
+        try
+        {
+            // バックアップ作成
+            var backupData = CreateBlendShapeBackup(mesh);
+            
+            // 修正処理
+            FixBlendShapeFrameOrder(mesh);
+            
+            // 検証
+            if (!ValidateBlendShapeData(mesh))
+            {
+                RestoreBlendShapeBackup(mesh, backupData);
+                Debug.LogError($"BlendShape修正失敗、復元しました: {mesh.name}");
+            }
+            else
+            {
+                Debug.Log($"BlendShape修正完了: {mesh.name}");
+            }
+        }
+        catch (Exception ex)
+        {
+            Debug.LogError($"BlendShape処理エラー {mesh.name}: {ex.Message}");
+        }
+    }
+}
+
+// バックアップ作成
+private struct BlendShapeBackup
+{
+    public Vector3[][] vertices;
+    public Vector3[][] normals;
+    public Vector3[][] tangents;
+    public float[] weights;
+    public string[] names;
+}
+
+private BlendShapeBackup CreateBlendShapeBackup(Mesh mesh)
+{
+    var backup = new BlendShapeBackup
+    {
+        vertices = new Vector3[mesh.blendShapeCount][],
+        normals = new Vector3[mesh.blendShapeCount][],
+        tangents = new Vector3[mesh.blendShapeCount][],
+        weights = new float[mesh.blendShapeCount],
+        names = new string[mesh.blendShapeCount]
+    };
+    
+    for (int i = 0; i < mesh.blendShapeCount; i++)
+    {
+        backup.names[i] = mesh.GetBlendShapeName(i);
+        int frameCount = mesh.GetBlendShapeFrameCount(i);
+        
+        for (int frame = 0; frame < frameCount; frame++)
+        {
+            backup.weights[i] = mesh.GetBlendShapeFrameWeight(i, frame);
+            backup.vertices[i] = new Vector3[mesh.vertexCount];
+            backup.normals[i] = new Vector3[mesh.vertexCount];
+            backup.tangents[i] = new Vector3[mesh.vertexCount];
+            
+            mesh.GetBlendShapeFrameVertices(i, frame, 
+                backup.vertices[i], backup.normals[i], backup.tangents[i]);
+        }
+    }
+    
+    return backup;
+}
+
+// 効率的なソートチェック
+private bool NeedsBlendShapeFix(Mesh mesh)
+{
+    for (int i = 0; i < mesh.blendShapeCount; i++)
+    {
+        int frameCount = mesh.GetBlendShapeFrameCount(i);
+        if (frameCount <= 1) continue;
+        
+        for (int frame = 1; frame < frameCount; frame++)
+        {
+            float prevWeight = mesh.GetBlendShapeFrameWeight(i, frame - 1);
+            float currWeight = mesh.GetBlendShapeFrameWeight(i, frame);
+            if (prevWeight > currWeight)
+                return true;
+        }
+    }
+    return false;
+}
+
+// 検証機能
+private bool ValidateBlendShapeData(Mesh mesh)
+{
+    try
+    {
+        // 基本検証
+        if (mesh.blendShapeCount == 0) return true;
+        
+        // ソート検証
+        return !NeedsBlendShapeFix(mesh);
+    }
+    catch
+    {
+        return false;
+    }
+}
+```

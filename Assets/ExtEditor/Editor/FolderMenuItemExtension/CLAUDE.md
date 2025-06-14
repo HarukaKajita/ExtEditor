@@ -89,3 +89,139 @@ Scripts
 - **命名規則**: `.fmi`ファイル名がメニュー項目名になるため、わかりやすい名前を使用
 - **優先度設定**: よく使用するテンプレートには小さい優先度番号を設定
 - **フォルダー命名**: 作成されるフォルダー名にはUnityの命名規則に従う
+
+## 現状の課題
+
+### 重要度: High（高）
+- **ファイルシステム競合状態**: 適切な同期なしでのファイル操作
+  - **影響**: 同時アクセス時のファイル破損やアクセスエラー
+  - **改善提案**: ファイルロック機構またはアトミック操作の実装
+
+- **リソースリーク**: StreamWriterがすべてのコードパスで破棄されない
+  - **影響**: ファイルハンドルリークによるシステムリソース不足
+  - **改善提案**: using文による確実なリソース解放
+
+- **セキュリティ**: ファイルパス検証不足でディレクトリトラバーサル攻撃の可能性
+  - **影響**: 意図しないディレクトリへのファイル作成リスク
+  - **改善提案**: パス正規化と安全なディレクトリ制限
+
+### 重要度: Medium（中）
+- **エラーハンドリング**: ファイル操作失敗時の静的失敗
+  - **影響**: 問題発生時にユーザーが気づかない
+  - **改善提案**: 明示的なエラー表示とログ機能
+
+- **コード生成検証**: 生成されたコードの検証やエラーチェックなし
+  - **影響**: 不正なC#コードが生成されてコンパイルエラー
+  - **改善提案**: 生成コードの構文チェックと検証機能
+
+### 具体的な改善コード例
+
+```csharp
+// リソースリークとエラーハンドリング修正
+public override void OnImportAsset(AssetImportContext ctx)
+{
+    try
+    {
+        string[] lines = File.ReadAllLines(ctx.assetPath);
+        if (lines.Length == 0)
+        {
+            Debug.LogError($"空のファイル: {ctx.assetPath}");
+            return;
+        }
+
+        // 優先度解析
+        if (!int.TryParse(lines[0], out int priority))
+        {
+            Debug.LogError($"無効な優先度: {lines[0]} in {ctx.assetPath}");
+            return;
+        }
+
+        // パス検証
+        string scriptFilePath = Path.Combine(Path.GetDirectoryName(ctx.assetPath), 
+                                           Path.GetFileNameWithoutExtension(ctx.assetPath) + ".cs");
+        
+        // セキュリティ: パス正規化と検証
+        string fullScriptPath = Path.GetFullPath(scriptFilePath);
+        string assetsPath = Path.GetFullPath(Application.dataPath);
+        if (!fullScriptPath.StartsWith(assetsPath))
+        {
+            Debug.LogError($"無効なスクリプトパス: {fullScriptPath}");
+            return;
+        }
+
+        // テンプレート処理...
+        string templateText = GenerateTemplate(lines, priority);
+
+        // 生成コード検証
+        if (!ValidateGeneratedCode(templateText))
+        {
+            Debug.LogError("生成されたコードが無効です");
+            return;
+        }
+
+        // ファイル書き込み（原子的操作）
+        string tempPath = scriptFilePath + ".tmp";
+        using (var sw = File.CreateText(tempPath))
+        {
+            sw.Write(templateText);
+        }
+
+        // 原子的ファイル置換
+        if (File.Exists(scriptFilePath))
+            File.Delete(scriptFilePath);
+        File.Move(tempPath, scriptFilePath);
+
+        AssetDatabase.ImportAsset(GetProjectRelativePath(scriptFilePath));
+    }
+    catch (Exception ex)
+    {
+        Debug.LogError($"FMIファイル処理エラー {ctx.assetPath}: {ex.Message}");
+        EditorUtility.DisplayDialog("エラー", $"フォルダーメニュー生成に失敗しました: {ex.Message}", "OK");
+    }
+}
+
+// 生成コード検証
+private bool ValidateGeneratedCode(string code)
+{
+    // 基本的な構文チェック
+    if (string.IsNullOrEmpty(code)) return false;
+    if (!code.Contains("class ")) return false;
+    if (!code.Contains("[MenuItem(")) return false;
+    
+    // より詳細な検証可能
+    return true;
+}
+
+// プロジェクト相対パス取得
+private string GetProjectRelativePath(string absolutePath)
+{
+    string assetsPath = Application.dataPath;
+    if (absolutePath.StartsWith(assetsPath))
+        return "Assets" + absolutePath.Substring(assetsPath.Length);
+    return absolutePath;
+}
+
+// ファイルロック付き安全な書き込み
+private void SafeWriteFile(string filePath, string content)
+{
+    const int maxRetries = 3;
+    const int retryDelayMs = 100;
+    
+    for (int i = 0; i < maxRetries; i++)
+    {
+        try
+        {
+            using var fs = new FileStream(filePath, FileMode.Create, FileAccess.Write, FileShare.None);
+            using var sw = new StreamWriter(fs);
+            sw.Write(content);
+            return; // 成功
+        }
+        catch (IOException) when (i < maxRetries - 1)
+        {
+            Thread.Sleep(retryDelayMs);
+        }
+    }
+    
+    throw new IOException($"ファイル書き込みに失敗: {filePath}");
+}
+```
