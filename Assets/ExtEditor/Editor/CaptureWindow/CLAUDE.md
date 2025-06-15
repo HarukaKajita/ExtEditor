@@ -13,34 +13,63 @@ CaptureWindowツールは、Unity内の様々なビューからスクリーン�
 - **カメラ選択**: シーンカメラから選択またはカスタムカメラを指定
 - **アルファチャンネルサポート**: PNG出力時にアルファチャンネルを含める
 - **透明背景**: 透明背景での撮影オプション
-- **自動ファイル名**: タイムスタンプベースの命名（`Capture_yyyyMMdd_HHmmss.png`）
+- **高度なファイル名システム**: パターンベースのファイル名生成
+- **テイク番号管理**: 自動インクリメントと桁数固定
+- **パス指定方式**: 相対パスと絶対パスの切り替え
+- **最近のキャプチャ履歴**: 直近5件のキャプチャを表示
 - **キーボードショートカット**: F9 + Cmd/Ctrl + Shift でクイック撮影
+
+### パターンシステム
+利用可能なパターン:
+- `<Date>`: 日付（yyyyMMdd形式）
+- `<Time>`: 時刻（HHmmss形式）
+- `<DateTime>`: 日時（yyyyMMdd_HHmmss形式）
+- `<Take>`: テイク番号（自動インクリメント対応）
+- `<Camera>`: カメラ名
+- `<Scene>`: シーン名
+- `<Project>`: プロジェクト名
+- `<Source>`: キャプチャソース名
 
 ### 使用方法
 1. **ツール → CaptureWindow**メニューからアクセス
 2. 撮影ソースを選択（Game View/Scene View/RenderTexture）
 3. ドロップダウンまたはObjectFieldからターゲットカメラを選択
-4. 出力ディレクトリを設定（デフォルト: `../Captures`）
-5. アルファチャンネルと背景オプションを設定
-6. "Capture and Save PNG"をクリックまたはショートカットを使用
-7. "Open Output Folder"で保存画像を確認
+4. パス指定方式を選択（相対/絶対）
+5. 出力ディレクトリを設定（パターン使用可）
+6. ファイル名テンプレートを設定
+7. アルファチャンネルと背景オプションを設定
+8. "Capture and Save PNG"をクリックまたはショートカットを使用
+9. "Open Output Folder"で保存画像を確認
 
 ## 実装詳細
 
-### ファイル構造
-- **メインクラス**: `CaptureWindow` - EditorWindowの実装
-- **単一ファイル**: 全機能が一つのファイルに集約
+### ファイル構造（リファクタリング後）
+- **CaptureWindow.cs**: メインのEditorWindowクラス（UIコントローラー）
+- **CaptureWindowState.cs**: 状態管理クラス
+- **CaptureCore.cs**: キャプチャ処理のコアロジック
+- **CaptureWindowUI.cs**: UI描画ロジック
+- **PatternResolver.cs**: パターン置換システム
+- **CaptureValidator.cs**: 入力検証
+- **CaptureLocalization.cs**: 多言語対応
+- **CaptureSettings.cs**: 設定保存用ScriptableObject
+
+### アーキテクチャ
+- **MVVM風設計**: 状態(Model)、ロジック(Core)、UI(View)の分離
+- **依存性注入**: UIクラスは状態とコールバックを受け取る
+- **単一責任原則**: 各クラスが明確な役割を持つ
 
 ### 撮影メカニズム
 - **RenderTexture**: すべての撮影操作にRenderTextureを使用
 - **カメラ状態管理**: 撮影後に適切にカメラ状態を復元
+- **エラーハンドリング**: try-finallyブロックでリソースを確実に解放
 - **複数撮影モード**: ウィンドウ撮影とショートカット撮影に対応
 
 ### 技術的特徴
-- `EditorUtility.RevealInFinder()`による出力フォルダーの表示
-- 出力ディレクトリの自動作成
-- カメラ背景設定の撮影中の適切な管理
-- キーボードショートカットの統合
+- **パス変換**: 相対パス⇔絶対パスの自動変換
+- **パターン置換**: 柔軟なファイル名・パス生成
+- **バリデーション**: リアルタイムの入力検証
+- **状態管理**: 設定の永続化と復元
+- **UI更新**: 状態変更時の自動UI更新
 
 ## 設定詳細
 
@@ -49,14 +78,15 @@ CaptureWindowツールは、Unity内の様々なビューからスクリーン�
 - **機能**: 現在の設定でクイック撮影を実行
 
 ### 出力設定
-- **デフォルト出力先**: Assetsフォルダの上位ディレクトリ（`../Captures`）
+- **デフォルト出力先**: `/Captures`（相対パス）
 - **ファイル形式**: PNG（アルファチャンネル対応）
-- **命名規則**: `Capture_yyyyMMdd_HHmmss.png`
+- **命名規則**: `Capture_<Date>_<Time>.png`（カスタマイズ可能）
 
 ### 撮影オプション
 - **アルファチャンネル**: 透明度情報を含める
 - **背景透明化**: 背景を透明にして撮影
-- **カメラ選択**: Scene内のカメラまたはカスタムカメラ
+- **テイク番号桁数固定**: 001, 0001などの形式
+- **自動アセット更新**: 撮影後にAssetDatabase.Refresh()を実行
 
 ## 開発ノート
 
@@ -64,120 +94,62 @@ CaptureWindowツールは、Unity内の様々なビューからスクリーン�
 - 出力ディレクトリ作成失敗時の処理
 - カメラが見つからない場合の警告
 - RenderTexture作成失敗時の処理
+- パス変換エラー時のフォールバック
 
 ### パフォーマンス考慮
 - RenderTextureの適切な解放
 - 撮影時のカメラ状態の最小限の変更
 - メモリ効率的な画像処理
+- UI更新の最適化
 
 ### 拡張可能性
+- 新しいパターンの追加は`PatternResolver`クラスで実装
 - 新しい撮影ソースの追加は`CaptureSource`enumと対応するメソッドで実装
-- 出力形式の拡張は`SaveTextureToPNG`メソッドを参考に実装
-- ショートカットの追加は`OnGUI`メソッドのイベント処理部分で実装
+- 出力形式の拡張は`CaptureCore`クラスの保存メソッドを拡張
+- 新しいバリデーションルールは`CaptureValidator`クラスに追加
 
-## 現状の課題
+### API設計
+- 外部からの操作用にpublicメソッドを提供
+- 状態の取得・設定メソッド
+- プログラムからの撮影実行
 
-### 重要度: Critical（緊急）
-- **メモリリーク**: エラーパスでRenderTextureとTexture2Dが適切に解放されない
-  - **影響**: 長時間使用や撮影失敗時にメモリ不足による動作不安定
-  - **改善提案**: try-finallyブロックによる確実なリソース解放処理
+### 今後の改善案
+- 設定のプリセット機能
+- 複数ファイル形式への対応（JPG、TGA等）
+- バッチ撮影機能
+- 撮影後の自動処理（リサイズ、圧縮等）
+- クラウド保存対応
 
-- **Null参照例外**: 複数箇所でnullチェックが不十分
-  - **影響**: アプリケーションクラッシュや予期しない動作
-  - **改善提案**: カメラやターゲットテクスチャの存在確認強化
+## 最新のリファクタリング内容
 
-### 重要度: High（高）
-- **スレッドセーフティ問題**: 静的変数`lastInstance`への同期なしアクセス
-  - **影響**: マルチスレッド環境でのデータ競合とクラッシュリスク
-  - **改善提案**: ロック機構またはインスタンスベース設計への変更
+### 2025年1月の改善
+- **コード分離**: 巨大な単一ファイルを責任ごとに分離
+  - CaptureWindow.cs: UIコントローラー
+  - CaptureWindowState.cs: 状態管理
+  - CaptureCore.cs: キャプチャロジック
+  - CaptureWindowUI.cs: UI描画
+  
+- **パス指定方式の改善**: 
+  - 相対/絶対パス切り替え時の自動変換
+  - パターンを含むパスの適切な処理
+  
+- **設計パターンの適用**:
+  - MVVM風アーキテクチャ
+  - 依存性注入
+  - 単一責任原則
 
-- **リソース管理不備**: エラー時にテクスチャが作成されても破棄されない
-  - **影響**: メモリリークとGPUメモリ不足
-  - **改善提案**: using文またはDisposableパターンの実装
+### 以前の課題の解決状況
 
-- **カメラ状態破損**: 例外発生時に元のカメラ設定が復元されない
-  - **影響**: 撮影後にカメラの表示状態が異常になる
-  - **改善提案**: finally ブロックでの確実な状態復元
+**解決済み**:
+- ✅ メモリリーク: CaptureCore.csでtry-finallyブロックを使用
+- ✅ カメラ状態復元: finallyブロックで確実に復元
+- ✅ コードの可読性: 適切なクラス分離により改善
 
-### 重要度: Medium（中）
-- **多言語混在**: エラーメッセージで日本語と英語が混在
-  - **影響**: 一貫性のないユーザーエクスペリエンス
-  - **改善提案**: 統一された言語での表示または国際化対応
+**部分的に解決**:
+- ⚠️ 多言語対応: CaptureLocalization.csで管理されているが、まだ改善の余地あり
+- ⚠️ パス検証: CaptureValidator.csで実装されているが、セキュリティ面で追加検証が必要
 
-- **パスセキュリティ**: 出力ディレクトリパスの検証不足
-  - **影響**: 任意のディレクトリへの書き込みによるセキュリティリスク
-  - **改善提案**: パス正規化と安全なディレクトリ制限
-
-- **パフォーマンス**: 毎フレームの不要なカメラ検索
-  - **影響**: エディターのレスポンス性低下
-  - **改善提案**: カメラ参照のキャッシュ機能
-
-### 具体的な改善コード例
-
-```csharp
-// メモリリーク修正
-private void CaptureAndSave()
-{
-    RenderTexture renderTexture = null;
-    Texture2D tex = null;
-    RenderTexture prevActive = RenderTexture.active;
-    RenderTexture prevCamTarget = captureCamera.targetTexture;
-    
-    try
-    {
-        // カメラnullチェック追加
-        if (captureCamera == null)
-        {
-            EditorUtility.DisplayDialog("エラー", "カメラが指定されていません", "OK");
-            return;
-        }
-        
-        renderTexture = new RenderTexture(width, height, 24, RenderTextureFormat.ARGB32);
-        tex = new Texture2D(width, height, TextureFormat.RGBA32, false);
-        
-        // 撮影処理...
-        
-        // 安全なパス検証
-        if (!IsValidOutputPath(outputPath))
-        {
-            EditorUtility.DisplayDialog("エラー", "無効な出力パスです", "OK");
-            return;
-        }
-        
-        File.WriteAllBytes(filePath, tex.EncodeToPNG());
-    }
-    catch (Exception ex)
-    {
-        EditorUtility.DisplayDialog("撮影エラー", $"撮影に失敗しました: {ex.Message}", "OK");
-    }
-    finally
-    {
-        // 確実なリソース解放
-        if (tex != null) DestroyImmediate(tex);
-        if (renderTexture != null)
-        {
-            renderTexture.Release();
-            DestroyImmediate(renderTexture);
-        }
-        
-        // カメラ状態復元
-        captureCamera.targetTexture = prevCamTarget;
-        RenderTexture.active = prevActive;
-    }
-}
-
-// パス検証メソッド
-private bool IsValidOutputPath(string path)
-{
-    try
-    {
-        var fullPath = Path.GetFullPath(path);
-        var projectPath = Path.GetFullPath(Application.dataPath + "/..");
-        return fullPath.StartsWith(projectPath);
-    }
-    catch
-    {
-        return false;
-    }
-}
-```
+**未解決**:
+- ❌ スレッドセーフティ: 静的変数lastInstanceの同期処理未実装
+- ❌ プリセット機能: 未実装
+- ❌ バッチ撮影機能: 未実装
