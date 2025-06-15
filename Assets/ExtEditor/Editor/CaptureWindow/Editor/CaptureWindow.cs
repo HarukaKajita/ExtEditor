@@ -56,7 +56,7 @@ namespace ExtEditor.Editor.CaptureWindow
             }
             catch
             {
-                return state.GetText("無効なパス", "Invalid Path");
+                return state.GetText(CaptureLocalization.TextKey.InvalidPath);
             }
         }
         
@@ -132,7 +132,7 @@ namespace ExtEditor.Editor.CaptureWindow
             }
 
             // 選択中のカメラのインデックスを設定
-            state.SelectedCameraIndex = System.Array.IndexOf(state.SceneCameras, state.CaptureCamera);
+            state.SelectedCameraIndex = Array.IndexOf(state.SceneCameras, state.CaptureCamera);
             
             // 初期バリデーション
             ValidateInputs();
@@ -164,18 +164,6 @@ namespace ExtEditor.Editor.CaptureWindow
         private void OnGUI()
         {
             ui.DrawGUI();
-            
-            // ボタンクリックイベントを処理
-            Event e = Event.current;
-            if (e.type == EventType.Used)
-            {
-                return;
-            }
-            
-            // CaptureWindowUIクラスのDrawActionButtonsメソッドを修正して
-            // ボタンクリック時にこのメソッドを呼び出すようにする必要がある
-            // 現在の実装では、UIクラス内でボタンを描画しているが、
-            // クリックイベントはこのクラスで処理する必要がある
         }
 
         // UIから呼び出されるメソッド

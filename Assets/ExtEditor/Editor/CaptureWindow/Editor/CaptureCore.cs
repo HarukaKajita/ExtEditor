@@ -40,7 +40,7 @@ namespace ExtEditor.Editor.CaptureWindow
                 // 解像度取得
                 if (!GetCaptureResolution(out int width, out int height))
                 {
-                    Debug.LogError(state.GetText("キャプチャ解像度が無効です", "Invalid capture resolution"));
+                    Debug.LogError(state.GetText(CaptureLocalization.TextKey.InvalidCaptureResolution));
                     return null;
                 }
 
@@ -48,7 +48,7 @@ namespace ExtEditor.Editor.CaptureWindow
                 renderTexture = new RenderTexture(width, height, 24, RenderTextureFormat.ARGB32);
                 if (!renderTexture.Create())
                 {
-                    throw new Exception(state.GetText("RenderTextureの作成に失敗しました", "Failed to create RenderTexture"));
+                    throw new Exception(state.GetText(CaptureLocalization.TextKey.RenderTextureCreationFailed));
                 }
 
                 TextureFormat format = state.IncludeAlpha ? TextureFormat.RGBA32 : TextureFormat.RGB24;
@@ -77,7 +77,7 @@ namespace ExtEditor.Editor.CaptureWindow
             }
             catch (Exception ex)
             {
-                Debug.LogError($"{state.GetText("キャプチャエラー", "Capture Error")}: {ex.Message}");
+                Debug.LogError($"{state.GetText(CaptureLocalization.TextKey.CaptureError)}: {ex.Message}");
                 return null;
             }
             finally
@@ -105,13 +105,13 @@ namespace ExtEditor.Editor.CaptureWindow
         {
             if (state.CaptureCamera == null)
             {
-                Debug.LogError(state.GetText("カメラが指定されていません", "Camera is not specified"));
+                Debug.LogError(state.GetText(CaptureLocalization.TextKey.CameraNotSpecified));
                 return false;
             }
             
             if (state.CaptureSource == CaptureWindow.CaptureSource.RenderTexture && state.CustomRenderTexture == null)
             {
-                Debug.LogError(state.GetText("レンダーテクスチャが指定されていません", "RenderTexture is not specified"));
+                Debug.LogError(state.GetText(CaptureLocalization.TextKey.RenderTextureNotSpecified));
                 return false;
             }
             
@@ -198,7 +198,7 @@ namespace ExtEditor.Editor.CaptureWindow
                 
                 File.WriteAllBytes(filePath, tex.EncodeToPNG());
                 
-                Debug.Log(state.GetText($"PNGを保存しました: {filePath}", $"PNG saved: {filePath}"));
+                Debug.Log(state.GetText(CaptureLocalization.TextKey.PNGSaved) + $"{filePath}");
                 
                 if (state.AutoRefreshAssets)
                 {
@@ -209,7 +209,7 @@ namespace ExtEditor.Editor.CaptureWindow
             }
             catch (Exception ex)
             {
-                Debug.LogError($"{state.GetText("保存エラー", "Save Error")}: {ex.Message}");
+                Debug.LogError($"{state.GetText(CaptureLocalization.TextKey.SaveError)}: {ex.Message}");
                 return null;
             }
         }
@@ -227,7 +227,7 @@ namespace ExtEditor.Editor.CaptureWindow
             }
             catch (Exception ex)
             {
-                Debug.LogError($"{state.GetText($"フォルダを開けませんでした: {ex.Message}", $"Cannot open folder: {ex.Message}")}");
+                Debug.LogError($"{state.GetText(CaptureLocalization.TextKey.CannotOpenFolder)}: {ex.Message}");
             }
         }
     }

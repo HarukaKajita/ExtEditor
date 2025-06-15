@@ -1,7 +1,7 @@
 using UnityEngine;
 using UnityEditor;
 using System.IO;
-using System.Linq;
+using localization = ExtEditor.Editor.CaptureWindow.CaptureLocalization;
 
 namespace ExtEditor.Editor.CaptureWindow
 {
@@ -57,7 +57,7 @@ namespace ExtEditor.Editor.CaptureWindow
         private void DrawHeader()
         {
             EditorGUILayout.BeginHorizontal();
-            GUILayout.Label(state.GetText("PNGキャプチャ", "PNG Capture"), EditorStyles.boldLabel);
+            GUILayout.Label(state.GetText(localization.TextKey.Title), EditorStyles.boldLabel);
             GUILayout.FlexibleSpace();
             EditorGUI.BeginChangeCheck();
             state.CurrentLanguage = (CaptureWindow.Language)EditorGUILayout.EnumPopup(state.CurrentLanguage, GUILayout.Width(80));
@@ -76,7 +76,7 @@ namespace ExtEditor.Editor.CaptureWindow
             // キャプチャソース
             EditorGUI.BeginChangeCheck();
             state.CaptureSource = (CaptureWindow.CaptureSource)EditorGUILayout.EnumPopup(
-                state.GetText("キャプチャソース", "Capture Source"), state.CaptureSource);
+                state.GetText(localization.TextKey.CaptureSource), state.CaptureSource);
             if (EditorGUI.EndChangeCheck())
             {
                 validateInputs();
@@ -85,7 +85,7 @@ namespace ExtEditor.Editor.CaptureWindow
             // プルダウンメニューの更新
             EditorGUI.BeginChangeCheck();
             state.SelectedCameraIndex = EditorGUILayout.Popup(
-                state.GetText("シーンカメラ", "Scene Cameras"), 
+                state.GetText(localization.TextKey.SceneCameras), 
                 state.SelectedCameraIndex, 
                 state.SceneCameraNames);
             if (EditorGUI.EndChangeCheck() && state.SelectedCameraIndex >= 0 && state.SelectedCameraIndex < state.SceneCameras.Length)
@@ -97,7 +97,7 @@ namespace ExtEditor.Editor.CaptureWindow
             // ObjectFieldの更新
             EditorGUI.BeginChangeCheck();
             state.CaptureCamera = (Camera)EditorGUILayout.ObjectField(
-                state.GetText("ターゲットカメラ", "Target Camera"), 
+                state.GetText(localization.TextKey.TargetCamera), 
                 state.CaptureCamera, 
                 typeof(Camera), 
                 true);
@@ -112,7 +112,7 @@ namespace ExtEditor.Editor.CaptureWindow
             {
                 EditorGUI.BeginChangeCheck();
                 state.CustomRenderTexture = (RenderTexture)EditorGUILayout.ObjectField(
-                    state.GetText("レンダーテクスチャ", "Render Texture"), 
+                    state.GetText(localization.TextKey.RenderTexture), 
                     state.CustomRenderTexture, 
                     typeof(RenderTexture), 
                     true);
@@ -132,7 +132,7 @@ namespace ExtEditor.Editor.CaptureWindow
             EditorGUILayout.BeginHorizontal();
             EditorGUI.BeginChangeCheck();
             state.PathMode = (CaptureWindow.PathMode)EditorGUILayout.EnumPopup(
-                state.GetText("パス指定方式", "Path Mode"), state.PathMode);
+                state.GetText(localization.TextKey.PathMode), state.PathMode);
             if (EditorGUI.EndChangeCheck())
             {
                 updateOutputDirectoryForPathMode();
@@ -142,11 +142,11 @@ namespace ExtEditor.Editor.CaptureWindow
             // フォルダ選択ボタン
             if (GUILayout.Button(new GUIContent(
                 EditorGUIUtility.IconContent("Folder Icon").image, 
-                state.GetText("フォルダ選択", "Select Folder")), 
+                state.GetText(localization.TextKey.SelectFolder)), 
                 GUILayout.Width(30), GUILayout.Height(18)))
             {
                 string selectedPath = EditorUtility.OpenFolderPanel(
-                    state.GetText("出力フォルダを選択", "Select Output Folder"),
+                    state.GetText(localization.TextKey.SelectFolder),
                     string.IsNullOrEmpty(state.OutputDirectory) ? Application.dataPath : state.OutputDirectory,
                     ""
                 );
@@ -160,7 +160,7 @@ namespace ExtEditor.Editor.CaptureWindow
 
             // 出力ディレクトリ
             EditorGUI.BeginChangeCheck();
-            string directoryLabel = state.GetText("出力フォルダ", "Output Directory");
+            string directoryLabel = state.GetText(localization.TextKey.OutputDirectory);
             state.OutputDirectory = EditorGUILayout.TextField(directoryLabel, state.OutputDirectory);
             if (EditorGUI.EndChangeCheck())
             {
@@ -175,7 +175,7 @@ namespace ExtEditor.Editor.CaptureWindow
             else
             {
                 EditorGUILayout.LabelField(
-                    state.GetText("フォルダパス", "Resolved Path"), 
+                    state.GetText(localization.TextKey.ResolvedPath),
                     state.ResolvedOutputPath, 
                     EditorStyles.miniLabel);
             }
@@ -188,8 +188,8 @@ namespace ExtEditor.Editor.CaptureWindow
         {
             // ファイル名テンプレート
             EditorGUI.BeginChangeCheck();
-            state.FileNameTemplate = EditorGUILayout.TextField(
-                state.GetText("ファイル名テンプレート", "Filename Template"), 
+            state.FileNameTemplate = EditorGUILayout.TextField( 
+                state.GetText(localization.TextKey.FilenameTemplate), 
                 state.FileNameTemplate);
             if (EditorGUI.EndChangeCheck())
             {
@@ -199,7 +199,7 @@ namespace ExtEditor.Editor.CaptureWindow
             // テイク番号
             EditorGUI.BeginChangeCheck();
             state.TakeNumber = EditorGUILayout.IntField(
-                state.GetText("テイク番号", "Take Number"), 
+                state.GetText(localization.TextKey.TakeNumber), 
                 state.TakeNumber);
             if (EditorGUI.EndChangeCheck())
             {
@@ -209,14 +209,14 @@ namespace ExtEditor.Editor.CaptureWindow
             
             // テイク番号桁数固定オプション
             EditorGUI.BeginChangeCheck();
-            state.UseFixedTakeDigits = EditorGUILayout.Toggle(
-                state.GetText("テイク番号桁数固定", "Fixed Take Digits"), 
+            state.UseFixedTakeDigits = EditorGUILayout.Toggle( 
+                state.GetText(localization.TextKey.FixedTakeDigits), 
                 state.UseFixedTakeDigits);
             if (state.UseFixedTakeDigits)
             {
                 EditorGUI.indentLevel++;
                 state.TakeDigits = EditorGUILayout.IntSlider(
-                    state.GetText("桁数", "Digits"), 
+                    state.GetText(localization.TextKey.Digits), 
                     state.TakeDigits, 1, 10);
                 EditorGUI.indentLevel--;
             }
@@ -238,7 +238,7 @@ namespace ExtEditor.Editor.CaptureWindow
                     wordWrap = true
                 };
                 EditorGUILayout.LabelField(
-                    state.GetText("プレビュー", "Preview"), 
+                    state.GetText(localization.TextKey.Preview), 
                     state.PreviewFileName, 
                     previewStyle);
                 
@@ -251,7 +251,7 @@ namespace ExtEditor.Editor.CaptureWindow
                 };
                 
                 EditorGUILayout.BeginVertical("box");
-                EditorGUILayout.LabelField(state.GetText("完全パス", "Full Path"));
+                EditorGUILayout.LabelField(state.GetText(localization.TextKey.FullPath));
                 EditorGUILayout.SelectableLabel(fullPathPreview, pathStyle, GUILayout.MinHeight(EditorGUIUtility.singleLineHeight * 2));
                 EditorGUILayout.EndVertical();
             }
@@ -262,14 +262,14 @@ namespace ExtEditor.Editor.CaptureWindow
         /// </summary>
         private void DrawOptionsSection()
         {
-            state.IncludeAlpha = EditorGUILayout.Toggle(
-                state.GetText("アルファを含める", "Include Alpha Channel"), 
+            state.IncludeAlpha = EditorGUILayout.Toggle( 
+                state.GetText(localization.TextKey.IncludeAlpha), 
                 state.IncludeAlpha);
             state.UseTransparentBackground = EditorGUILayout.Toggle(
-                state.GetText("背景透過", "Transparent Background"), 
+                state.GetText(localization.TextKey.TransparentBackground), 
                 state.UseTransparentBackground);
-            state.AutoRefreshAssets = EditorGUILayout.Toggle(
-                state.GetText("保存後にアセット更新", "Auto Refresh Assets"), 
+            state.AutoRefreshAssets = EditorGUILayout.Toggle( 
+                state.GetText(localization.TextKey.AutoRefreshAssets), 
                 state.AutoRefreshAssets);
         }
         
@@ -279,16 +279,12 @@ namespace ExtEditor.Editor.CaptureWindow
         public void DrawActionButtons()
         {
             EditorGUI.BeginDisabledGroup(!state.IsOutputPathValid || !state.IsFileNameValid);
-            if (GUILayout.Button(state.GetText("キャプチャしてPNG保存", "Capture and Save PNG")))
-            {
+            if (GUILayout.Button(state.GetText(localization.TextKey.CaptureAndSave)))
                 window?.CaptureAndSave();
-            }
             EditorGUI.EndDisabledGroup();
 
-            if (GUILayout.Button(state.GetText("出力フォルダを開く", "Open Output Folder")))
-            {
+            if (GUILayout.Button(state.GetText(localization.TextKey.OpenOutputFolder)))
                 window?.OpenOutputDirectory();
-            }
         }
         
         /// <summary>
@@ -300,8 +296,8 @@ namespace ExtEditor.Editor.CaptureWindow
             {
                 EditorGUILayout.Space();
                 state.ShowRecentCaptures = EditorGUILayout.Foldout(
-                    state.ShowRecentCaptures, 
-                    state.GetText("最近のキャプチャ", "Recent Captures"));
+                    state.ShowRecentCaptures,
+                    state.GetText(localization.TextKey.RecentCaptures));
                 if (state.ShowRecentCaptures)
                 {
                     EditorGUI.indentLevel++;
@@ -309,7 +305,7 @@ namespace ExtEditor.Editor.CaptureWindow
                     {
                         EditorGUILayout.BeginHorizontal();
                         EditorGUILayout.LabelField(Path.GetFileName(state.RecentCaptures[i]), EditorStyles.miniLabel);
-                        if (GUILayout.Button(state.GetText("表示", "Show"), GUILayout.Width(50)))
+                        if (GUILayout.Button(state.GetText(localization.TextKey.Show), GUILayout.Width(50)))
                         {
                             EditorUtility.RevealInFinder(state.RecentCaptures[i]);
                         }
@@ -325,11 +321,9 @@ namespace ExtEditor.Editor.CaptureWindow
         /// </summary>
         private void DrawHelpSection()
         {
-            state.ShowHelp = EditorGUILayout.Foldout(state.ShowHelp, state.GetText("ヘルプ", "Help"));
+            state.ShowHelp = EditorGUILayout.Foldout(state.ShowHelp, state.GetText(localization.TextKey.Help));
             if (state.ShowHelp)
-            {
                 DrawHelpContent();
-            }
         }
         
         /// <summary>
@@ -340,20 +334,19 @@ namespace ExtEditor.Editor.CaptureWindow
             EditorGUILayout.BeginVertical("box");
             
             // 使用方法
-            EditorGUILayout.LabelField(state.GetText("使用方法", "Usage"), EditorStyles.boldLabel);
+            EditorGUILayout.LabelField(state.GetText(localization.TextKey.Usage), EditorStyles.boldLabel);
             var usageStyle = new GUIStyle(EditorStyles.label)
             {
                 wordWrap = true
             };
             EditorGUILayout.LabelField(state.GetText(
-                "1. キャプチャソースを選択\n2. カメラを指定\n3. 出力フォルダとファイル名を設定\n4. キャプチャボタンをクリック",
-                "1. Select capture source\n2. Specify camera\n3. Set output folder and filename\n4. Click capture button"
+                localization.TextKey.UsageText
             ), usageStyle);
             
             EditorGUILayout.Space();
             
             // パターン一覧
-            EditorGUILayout.LabelField(state.GetText("パターン一覧", "Pattern List"), EditorStyles.boldLabel);
+            EditorGUILayout.LabelField(state.GetText(localization.TextKey.PatternList), EditorStyles.boldLabel);
             
             var patterns = PatternResolver.GetAvailablePatterns();
             var context = new PatternContext
@@ -375,24 +368,13 @@ namespace ExtEditor.Editor.CaptureWindow
             EditorGUILayout.Space();
             
             // オプション説明
-            EditorGUILayout.LabelField(state.GetText("オプション", "Options"), EditorStyles.boldLabel);
+            EditorGUILayout.LabelField(state.GetText(localization.TextKey.Options), EditorStyles.boldLabel);
             var optionsStyle = new GUIStyle(EditorStyles.label)
             {
                 wordWrap = true
             };
             EditorGUILayout.LabelField(state.GetText(
-                "アルファチャンネル: 透明情報を含めるPNGを作成\n" +
-                "透明背景: 背景を透明にして撮影\n" +
-                "テイク番号桁数固定: テイク番号の桁数を固定（例：001, 0001）\n" +
-                "保存後にアセット更新: 撮影後にUnityのアセットデータベースを更新\n" +
-                "出力フォルダ: パターン置換対応（例：Captures/<Date>）\n" +
-                "フォルダ選択ボタン: パス指定方式の右のアイコンでフォルダ選択",
-                "Alpha Channel: Create PNG with transparency\n" +
-                "Transparent Background: Capture with transparent background\n" +
-                "Fixed Take Digits: Fix take number digits (e.g., 001, 0001)\n" +
-                "Auto Refresh Assets: Refresh Unity asset database after capture\n" +
-                "Output Directory: Pattern replacement supported (e.g., Captures/<Date>)\n" +
-                "Folder Select Button: Click folder icon to select directory"
+                localization.TextKey.OptionsText
             ), optionsStyle);
             
             EditorGUILayout.EndVertical();

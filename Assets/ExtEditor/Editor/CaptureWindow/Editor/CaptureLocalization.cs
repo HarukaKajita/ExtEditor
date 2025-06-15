@@ -1,3 +1,5 @@
+using System.Collections.Generic;
+
 namespace ExtEditor.Editor.CaptureWindow
 {
     /// <summary>
@@ -5,138 +7,211 @@ namespace ExtEditor.Editor.CaptureWindow
     /// </summary>
     public static class CaptureLocalization
     {
+        private static readonly Dictionary<CaptureWindow.Language, Dictionary<TextKey, string>> localizedTexts = new()
+        {
+            { CaptureWindow.Language.Japanese, Japanese.Texts },
+            { CaptureWindow.Language.English, English.Texts }
+        };
+        public enum TextKey
+        {
+            Title,
+            CaptureSource,
+            SceneCameras,
+            TargetCamera,
+            RenderTexture,
+            PathMode,
+            SelectFolder,
+            OutputDirectory,
+            OutputDirectoryRelative,
+            OutputDirectoryAbsolute,
+            ResolvedPath,
+            FilenameTemplate,
+            TakeNumber,
+            FixedTakeDigits,
+            Digits,
+            Preview,
+            FullPath,
+            IncludeAlpha,
+            TransparentBackground,
+            AutoIncrementTake,
+            AutoRefreshAssets,
+            CaptureAndSave,
+            OpenOutputFolder,
+            RecentCaptures,
+            Show,
+            Help,
+
+            Error,
+            CameraNotSpecified,
+            RenderTextureNotSpecified,
+            InvalidCaptureResolution,
+            RenderTextureCreationFailed,
+            CaptureError,
+            CaptureFailed,
+            SaveError,
+            CannotOpenFolder,
+            InvalidPath,
+
+            FileExists,
+            FileExistsMessage,
+            Overwrite,
+            Cancel,
+            SaveComplete,
+            FileSaved,
+            PNGSaved,
+
+            Usage,
+            UsageText,
+            PatternList,
+            Options,
+            OptionsText,
+        }
         /// <summary>
         /// 日本語文字列定数
         /// </summary>
-        public static class Japanese
+        private static class Japanese
         {
-            // UI要素
-            public const string Title = "PNGキャプチャ";
-            public const string CaptureSource = "キャプチャソース";
-            public const string SceneCameras = "シーンカメラ";
-            public const string TargetCamera = "ターゲットカメラ";
-            public const string RenderTexture = "レンダーテクスチャ";
-            public const string PathMode = "パス指定方式";
-            public const string OutputDirectoryRelative = "出力ディレクトリ (相対パス)";
-            public const string OutputDirectoryAbsolute = "出力ディレクトリ (絶対パス)";
-            public const string ResolvedPath = "解決されたパス";
-            public const string FilenameTemplate = "ファイル名テンプレート";
-            public const string TakeNumber = "テイク番号";
-            public const string FixedTakeDigits = "テイク番号桁数固定";
-            public const string Digits = "桁数";
-            public const string Preview = "プレビュー";
-            public const string IncludeAlpha = "アルファチャンネルを含める";
-            public const string TransparentBackground = "透明背景";
-            public const string AutoIncrementTake = "テイク番号自動インクリメント";
-            public const string AutoRefreshAssets = "キャプチャ後にアセット更新";
-            public const string CaptureAndSave = "キャプチャしてPNG保存";
-            public const string OpenOutputFolder = "出力フォルダを開く";
-            public const string RecentCaptures = "最近のキャプチャ";
-            public const string Show = "表示";
-            public const string Help = "ヘルプ";
-            
-            // エラーメッセージ
-            public const string Error = "エラー";
-            public const string CameraNotSpecified = "カメラが指定されていません";
-            public const string RenderTextureNotSpecified = "レンダーテクスチャが指定されていません";
-            public const string InvalidCaptureResolution = "キャプチャ解像度が無効です";
-            public const string RenderTextureCreationFailed = "RenderTextureの作成に失敗しました";
-            public const string CaptureError = "キャプチャエラー";
-            public const string CaptureFailed = "撮影に失敗しました";
-            public const string CannotOpenFolder = "フォルダを開けませんでした";
-            public const string InvalidPath = "無効なパス";
-            
-            // 確認ダイアログ
-            public const string FileExists = "ファイルが存在します";
-            public const string FileExistsMessage = "は既に存在します。上書きしますか？";
-            public const string Overwrite = "上書き";
-            public const string Cancel = "キャンセル";
-            public const string SaveComplete = "保存完了";
-            public const string FileSaved = "ファイルを保存しました:";
-            public const string PNGSaved = "PNGを保存しました";
-            
-            // ヘルプ
-            public const string Usage = "使用方法";
-            public const string UsageText = "1. キャプチャソースを選択\n2. カメラを指定\n3. 出力フォルダとファイル名を設定\n4. キャプチャボタンをクリック";
-            public const string PatternList = "パターン一覧";
-            public const string Options = "オプション";
-            public const string OptionsText = "アルファチャンネル: 透明情報を含めるPNGを作成\n" +
-                                           "透明背景: 背景を透明にして撮影\n" +
-                                           "テイク番号桁数固定: テイク番号の桁数を固定（例：001, 0001）\n" +
-                                           "保存後にアセット更新: 撮影後にUnityのアセットデータベースを更新\n" +
-                                           "出力フォルダ: パターン置換対応（例：Captures/<Date>）\n" +
-                                           "フォルダ選択ボタン: パス指定方式の右のアイコンでフォルダ選択";
+            internal static readonly Dictionary<TextKey, string> Texts = new()
+            {
+                { TextKey.Title, "PNGキャプチャ" },
+                { TextKey.CaptureSource, "キャプチャソース" },
+                { TextKey.SceneCameras, "シーンカメラ" },
+                { TextKey.TargetCamera, "ターゲットカメラ" },
+                { TextKey.RenderTexture, "レンダーテクスチャ" },
+                { TextKey.PathMode, "パス指定方式" },
+                { TextKey.SelectFolder, "フォルダ選択" },
+                { TextKey.OutputDirectory, "出力フォルダ" },
+                { TextKey.OutputDirectoryRelative, "出力ディレクトリ (相対パス)" },
+                { TextKey.OutputDirectoryAbsolute, "出力ディレクトリ (絶対パス)" },
+                { TextKey.ResolvedPath, "解決されたパス" },
+                { TextKey.FilenameTemplate, "ファイル名テンプレート" },
+                { TextKey.TakeNumber, "テイク番号" },
+                { TextKey.FixedTakeDigits, "テイク番号桁数固定" },
+                { TextKey.Digits, "桁数" },
+                { TextKey.Preview, "プレビュー" },
+                { TextKey.FullPath, "フルパス" },
+                { TextKey.IncludeAlpha, "アルファチャンネルを含める" },
+                { TextKey.TransparentBackground, "透明背景" },
+                { TextKey.AutoIncrementTake, "テイク番号自動インクリメント" },
+                { TextKey.AutoRefreshAssets, "キャプチャ後にアセット更新" },
+                { TextKey.CaptureAndSave, "キャプチャしてPNG保存" },
+                { TextKey.OpenOutputFolder, "出力フォルダを開く" },
+                { TextKey.RecentCaptures, "最近のキャプチャ" },
+                { TextKey.Show, "表示" },
+                { TextKey.Help, "ヘルプ" },
+
+                // エラーメッセージ
+                { TextKey.Error, "エラー" },
+                { TextKey.CameraNotSpecified, "カメラが指定されていません" },
+                { TextKey.RenderTextureNotSpecified, "レンダーテクスチャが指定されていません" },
+                { TextKey.InvalidCaptureResolution, "キャプチャ解像度が無効です" },
+                { TextKey.RenderTextureCreationFailed, "RenderTextureの作成に失敗しました" },
+                { TextKey.CaptureError, "キャプチャエラー" },
+                { TextKey.CaptureFailed, "撮影に失敗しました" },
+                { TextKey.SaveError, "保存エラー" },
+                { TextKey.CannotOpenFolder, "フォルダを開けませんでした" },
+                { TextKey.InvalidPath, "無効なパス" },
+
+                { TextKey.FileExists, "ファイルが存在します" },
+                { TextKey.FileExistsMessage, "は既に存在します。上書きしますか？" },
+                { TextKey.Overwrite, "上書き" },
+                { TextKey.Cancel, "キャンセル" },
+                { TextKey.SaveComplete, "保存完了" },
+                { TextKey.FileSaved, "ファイルを保存しました" },
+                { TextKey.PNGSaved, "PNGを保存しました" },
+
+                { TextKey.Usage, "使い方" },
+                { TextKey.UsageText, "1. キャプチャソースを選択\n2. カメラを指定\n3. 出力フォルダとファイル名を設定\n4. キャプチャボタンをクリック" },
+                { TextKey.PatternList, "パターン一覧" },
+                { TextKey.Options, "オプション" },
+                { TextKey.OptionsText, "アルファチャンネル: 透明情報を含めるPNGを作成\n" +
+                                       "透明背景: 背景を透明にして撮影\n" +
+                                       "テイク番号桁数固定: テイク番号の桁数を固定（例：001, 0001）\n" +
+                                       "保存後にアセット更新: 撮影後にUnityのアセットデータベースを更新\n" +
+                                       "出力フォルダ: パターン置換対応（例：Captures/<Date>）\n" +
+                                       "フォルダ選択ボタン: パス指定方式の右のアイコンでフォルダ選択"}
+            };
         }
         
         /// <summary>
         /// 英語文字列定数
         /// </summary>
-        public static class English
+        private static class English
         {
-            // UI要素
-            public const string Title = "PNG Capture";
-            public const string CaptureSource = "Capture Source";
-            public const string SceneCameras = "Scene Cameras";
-            public const string TargetCamera = "Target Camera";
-            public const string RenderTexture = "Render Texture";
-            public const string PathMode = "Path Mode";
-            public const string OutputDirectoryRelative = "Output Directory (Relative)";
-            public const string OutputDirectoryAbsolute = "Output Directory (Absolute)";
-            public const string ResolvedPath = "Resolved Path";
-            public const string FilenameTemplate = "Filename Template";
-            public const string TakeNumber = "Take Number";
-            public const string FixedTakeDigits = "Fixed Take Digits";
-            public const string Digits = "Digits";
-            public const string Preview = "Preview";
-            public const string IncludeAlpha = "Include Alpha Channel";
-            public const string TransparentBackground = "Transparent Background";
-            public const string AutoIncrementTake = "Auto Increment Take";
-            public const string AutoRefreshAssets = "Auto Refresh Assets";
-            public const string CaptureAndSave = "Capture and Save PNG";
-            public const string OpenOutputFolder = "Open Output Folder";
-            public const string RecentCaptures = "Recent Captures";
-            public const string Show = "Show";
-            public const string Help = "Help";
-            
-            // エラーメッセージ
-            public const string Error = "Error";
-            public const string CameraNotSpecified = "Camera is not specified";
-            public const string RenderTextureNotSpecified = "RenderTexture is not specified";
-            public const string InvalidCaptureResolution = "Invalid capture resolution";
-            public const string RenderTextureCreationFailed = "Failed to create RenderTexture";
-            public const string CaptureError = "Capture Error";
-            public const string CaptureFailed = "Capture failed";
-            public const string CannotOpenFolder = "Cannot open folder";
-            public const string InvalidPath = "Invalid Path";
-            
-            // 確認ダイアログ
-            public const string FileExists = "File Exists";
-            public const string FileExistsMessage = " already exists. Overwrite?";
-            public const string Overwrite = "Overwrite";
-            public const string Cancel = "Cancel";
-            public const string SaveComplete = "Save Complete";
-            public const string FileSaved = "File saved:";
-            public const string PNGSaved = "PNG saved";
-            
-            // ヘルプ
-            public const string Usage = "Usage";
-            public const string UsageText = "1. Select capture source\n2. Specify camera\n3. Set output folder and filename\n4. Click capture button";
-            public const string PatternList = "Pattern List";
-            public const string Options = "Options";
-            public const string OptionsText = "Alpha Channel: Create PNG with transparency\n" +
-                                           "Transparent Background: Capture with transparent background\n" +
-                                           "Fixed Take Digits: Fix take number digits (e.g., 001, 0001)\n" +
-                                           "Auto Refresh Assets: Refresh Unity asset database after capture\n" +
-                                           "Output Directory: Pattern replacement supported (e.g., Captures/<Date>)\n" +
-                                           "Folder Select Button: Click folder icon to select directory";
+            internal static readonly Dictionary<TextKey, string> Texts = new()
+            {
+                { TextKey.Title, "PNG Capture" },
+                { TextKey.CaptureSource, "Capture Source" },
+                { TextKey.SceneCameras, "Scene Cameras" },
+                { TextKey.TargetCamera, "Target Camera" },
+                { TextKey.RenderTexture, "Render Texture" },
+                { TextKey.PathMode, "Path Mode" },
+                { TextKey.SelectFolder, "Select Folder" },
+                { TextKey.OutputDirectory, "Output Directory" },
+                { TextKey.OutputDirectoryRelative, "Output Directory (Relative)" },
+                { TextKey.OutputDirectoryAbsolute, "Output Directory (Absolute)" },
+                { TextKey.ResolvedPath, "Resolved Path" },
+                { TextKey.FilenameTemplate, "Filename Template" },
+                { TextKey.TakeNumber, "Take Number" },
+                { TextKey.FixedTakeDigits, "Fixed Take Digits" },
+                { TextKey.Digits, "Digits" },
+                { TextKey.Preview, "Preview" },
+                { TextKey.FullPath, "Full Path" },
+                { TextKey.IncludeAlpha, "Include Alpha Channel" },
+                { TextKey.TransparentBackground, "Transparent Background" },
+                { TextKey.AutoIncrementTake, "Auto Increment Take" },
+                { TextKey.AutoRefreshAssets, "Auto Refresh Assets" },
+                { TextKey.CaptureAndSave, "Capture and Save PNG" },
+                { TextKey.OpenOutputFolder, "Open Output Folder" },
+                { TextKey.RecentCaptures, "Recent Captures" },
+                { TextKey.Show, "Show" },
+                { TextKey.Help, "Help" },
+
+                // エラーメッセージ
+                { TextKey.Error, "Error" },
+                { TextKey.CameraNotSpecified, "Camera is not specified" },
+                { TextKey.RenderTextureNotSpecified, "RenderTexture is not specified" },
+                { TextKey.InvalidCaptureResolution, "Invalid capture resolution" },
+                { TextKey.RenderTextureCreationFailed, "Failed to create RenderTexture" },
+                { TextKey.CaptureError, "Capture Error" },
+                { TextKey.CaptureFailed, "Capture failed" },
+                { TextKey.SaveError, "Save Error" },
+                { TextKey.CannotOpenFolder, "Cannot open folder" },
+                { TextKey.InvalidPath, "Invalid Path" },
+
+                // 確認ダイアログ
+                { TextKey.FileExists, "File Exists" },
+                { TextKey.FileExistsMessage, " already exists. Overwrite?" },
+                { TextKey.Overwrite, "Overwrite" },
+                { TextKey.Cancel, "Cancel" },
+                { TextKey.SaveComplete, "Save Complete" },
+                { TextKey.FileSaved, "File saved:" },
+                { TextKey.PNGSaved, "PNG saved" },
+
+                { TextKey.Usage, "Usage" },
+                {
+                    TextKey.UsageText,
+                    "1. Select capture source\n2. Specify camera\n3. Set output folder and filename\n4. Click capture button"
+                },
+                { TextKey.PatternList, "Pattern List" },
+                { TextKey.Options, "Options" },
+                {
+                    TextKey.OptionsText, "Alpha Channel: Create PNG with transparency\n" +
+                                         "Transparent Background: Capture with transparent background\n" +
+                                         "Fixed Take Digits: Fix take number digits (e.g., 001, 0001)\n" +
+                                         "Auto Refresh Assets: Refresh Unity asset database after capture\n" +
+                                         "Output Directory: Pattern replacement supported (e.g., Captures/<Date>)\n" +
+                                         "Folder Select Button: Click folder icon to select directory"
+                }
+            };
         }
         
         /// <summary>
         /// 指定された言語に対応する文字列を取得
         /// </summary>
-        public static string GetText(CaptureWindow.Language language, string japaneseText, string englishText)
+        public static string GetText(TextKey textKey, CaptureWindow.Language language)
         {
-            return language == CaptureWindow.Language.Japanese ? japaneseText : englishText;
+            return localizedTexts[language][textKey];
         }
     }
 }

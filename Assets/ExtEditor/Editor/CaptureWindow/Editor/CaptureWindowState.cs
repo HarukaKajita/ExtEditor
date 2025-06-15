@@ -52,14 +52,6 @@ namespace ExtEditor.Editor.CaptureWindow
         public string LastCapturedFilePath { get; set; } = "";
         
         /// <summary>
-        /// 言語に応じたテキストを取得
-        /// </summary>
-        public string GetText(string japanese, string english)
-        {
-            return CurrentLanguage == CaptureWindow.Language.Japanese ? japanese : english;
-        }
-        
-        /// <summary>
         /// 最近のキャプチャを追加
         /// </summary>
         public void AddToRecentCaptures(string filePath)
@@ -88,6 +80,11 @@ namespace ExtEditor.Editor.CaptureWindow
                     TakeNumber++;
                 }
             }
+        }
+
+        public string GetText(CaptureLocalization.TextKey textKey)
+        {
+            return CaptureLocalization.GetText(textKey, CurrentLanguage);
         }
     }
 }
