@@ -4,6 +4,7 @@ using UnityEditor.Toolbars;
 using UnityEditor.Overlays;
 using UnityEngine.UIElements;
 using System;
+using UnityEditor.UIElements;
 
 namespace ExtEditor.BoneOverlay
 {
@@ -47,10 +48,7 @@ namespace ExtEditor.BoneOverlay
             
             // Register callbacks
             this.RegisterValueChangedCallback(OnToggleValueChanged);
-            dropdownClicked += () =>
-            {
-                ShowDropdown(worldBound);
-            };
+            dropdownClicked += ShowDropdown;
             
             // Register Scene GUI callback
             SceneView.duringSceneGui -= OnSceneGUI;
@@ -86,48 +84,49 @@ namespace ExtEditor.BoneOverlay
             }
         }
         
-        private void ShowDropdown(Rect drawPosition)
+        private void ShowDropdown()
         {
             dropdownMenu = new GenericDropdownMenu();
             
-            // Distance Filter Section
-            dropdownMenu.AddItem("Distance Filter", state.EnableDistanceFilter, () =>
-            {
-                state.EnableDistanceFilter = !state.EnableDistanceFilter;
-                SceneView.RepaintAll();
-            });
+            // Bone Settings Section
+            dropdownMenu.AddDisabledItem("Bone Settings", false);
             
-            if (state.EnableDistanceFilter)
-            {
-                // Add distance slider as a custom item
-                dropdownMenu.AddSeparator("");
-                
-                // Create a custom VisualElement for the slider
-                var sliderContainer = new VisualElement();
-                sliderContainer.style.paddingLeft = 20;
-                sliderContainer.style.paddingRight = 10;
-                sliderContainer.style.paddingTop = 5;
-                sliderContainer.style.paddingBottom = 5;
-                
-                var sliderLabel = new Label($"Max Distance: {state.MaxRenderDistance:F1}m");
-                sliderLabel.style.fontSize = 11;
-                sliderLabel.style.marginBottom = 2;
-                sliderContainer.Add(sliderLabel);
-                
-                var slider = new Slider(1f, 100f);
-                slider.value = state.MaxRenderDistance;
-                slider.style.width = 180;
-                slider.RegisterValueChangedCallback(evt =>
-                {
-                    state.MaxRenderDistance = evt.newValue;
-                    sliderLabel.text = $"Max Distance: {evt.newValue:F1}m";
-                    SceneView.RepaintAll();
-                });
-                sliderContainer.Add(slider);
-                
-                dropdownMenu.contentContainer.Add(sliderContainer);
-                dropdownMenu.AddSeparator("");
-            }
+            // Bone Distance Slider
+            var boneDistanceContainer = CreateSliderElement("Bone Distance", state.MaxRenderDistance, 1f, 100f, 
+                (value) => state.MaxRenderDistance = value, "m");
+            dropdownMenu.contentContainer.Add(boneDistanceContainer);
+            
+            // Sphere Size Slider
+            var sphereSizeContainer = CreateSliderElement("Sphere Size", state.SphereSize * 1000f, 1f, 100f, 
+                (value) => state.SphereSize = value / 1000f, "mm", 0.1f);
+            dropdownMenu.contentContainer.Add(sphereSizeContainer);
+            
+            // Line Width Slider
+            var lineWidthContainer = CreateSliderElement("Line Width", state.LineWidth, 0.1f, 10f, 
+                (value) => state.LineWidth = value, "", 0.1f);
+            dropdownMenu.contentContainer.Add(lineWidthContainer);
+            
+            // Bone Colors
+            var normalColorContainer = CreateColorElement("Normal Color", state.NormalColor, 
+                (color) => state.NormalColor = color);
+            dropdownMenu.contentContainer.Add(normalColorContainer);
+            
+            var selectedColorContainer = CreateColorElement("Selected Color", state.SelectedColor, 
+                (color) => state.SelectedColor = color);
+            dropdownMenu.contentContainer.Add(selectedColorContainer);
+            
+            var hoverColorContainer = CreateColorElement("Hover Color", state.HoverColor, 
+                (color) => state.HoverColor = color);
+            dropdownMenu.contentContainer.Add(hoverColorContainer);
+            
+            var lineColorContainer = CreateColorElement("Line Color", state.LineColor, 
+                (color) => state.LineColor = color);
+            dropdownMenu.contentContainer.Add(lineColorContainer);
+            
+            dropdownMenu.AddSeparator("");
+            
+            // Label Settings Section
+            dropdownMenu.AddDisabledItem("Label Settings", false);
             
             // Show Labels option
             dropdownMenu.AddItem("Show Labels", state.ShowLabels, () =>
@@ -136,12 +135,23 @@ namespace ExtEditor.BoneOverlay
                 SceneView.RepaintAll();
             });
             
-            dropdownMenu.AddSeparator("");
-            
-            // Additional options
-            dropdownMenu.AddItem("Settings/Normal Color", false, () => ShowColorPicker("Normal", state.NormalColor, color => state.NormalColor = color));
-            dropdownMenu.AddItem("Settings/Selected Color", false, () => ShowColorPicker("Selected", state.SelectedColor, color => state.SelectedColor = color));
-            dropdownMenu.AddItem("Settings/Hover Color", false, () => ShowColorPicker("Hover", state.HoverColor, color => state.HoverColor = color));
+            if (state.ShowLabels)
+            {
+                // Label Distance Slider
+                var labelDistanceContainer = CreateSliderElement("Label Distance", state.MaxLabelRenderDistance, 1f, 100f, 
+                    (value) => state.MaxLabelRenderDistance = value, "m");
+                dropdownMenu.contentContainer.Add(labelDistanceContainer);
+                
+                // Label Size Slider
+                var labelSizeContainer = CreateSliderElement("Label Size", state.LabelSize, 5f, 30f, 
+                    (value) => state.LabelSize = value, "pt", 1f);
+                dropdownMenu.contentContainer.Add(labelSizeContainer);
+                
+                // Label Color
+                var labelColorContainer = CreateColorElement("Label Color", state.LabelColor, 
+                    (color) => state.LabelColor = color);
+                dropdownMenu.contentContainer.Add(labelColorContainer);
+            }
             
             dropdownMenu.AddSeparator("");
             
@@ -162,66 +172,62 @@ namespace ExtEditor.BoneOverlay
             }
             
             // Show the dropdown
-            var rect = drawPosition;
-            Debug.Log(rect);
-            dropdownMenu.DropDown(drawPosition, this);
+            dropdownMenu.DropDown(worldBound, this);
         }
         
-        private void ShowColorPicker(string colorName, Color currentColor, Action<Color> onColorChanged)
+        private VisualElement CreateSliderElement(string label, float value, float min, float max, 
+            Action<float> onValueChanged, string suffix = "", float step = 1f)
         {
-            // Create a simple color picker window
-            var colorPickerWindow = EditorWindow.GetWindow<ColorPickerWindow>(true, $"Pick {colorName} Color", true);
-            colorPickerWindow.Initialize(colorName, currentColor, onColorChanged);
-            colorPickerWindow.ShowUtility();
+            var container = new VisualElement();
+            container.style.paddingLeft = 20;
+            container.style.paddingRight = 10;
+            
+            var labelElement = new Label($"{label}: {value:F1}{suffix}");
+            labelElement.style.fontSize = 11;
+            labelElement.style.marginBottom = 2;
+            container.Add(labelElement);
+            
+            var slider = new Slider(min, max);
+            slider.value = value;
+            slider.style.width = 180;
+            slider.RegisterValueChangedCallback(evt =>
+            {
+                var roundedValue = Mathf.Round(evt.newValue / step) * step;
+                onValueChanged?.Invoke(roundedValue);
+                labelElement.text = $"{label}: {roundedValue:F1}{suffix}";
+                SceneView.RepaintAll();
+            });
+            container.Add(slider);
+            
+            return container;
         }
         
-        // Simple color picker window
-        private class ColorPickerWindow : EditorWindow
+        private VisualElement CreateColorElement(string label, Color value, Action<Color> onValueChanged)
         {
-            private Color currentColor;
-            private Color originalColor;
-            private Action<Color> onColorChanged;
-            private string colorName;
+            var container = new VisualElement();
+            container.style.paddingLeft = 20;
+            container.style.paddingRight = 10;
+            container.style.flexDirection = FlexDirection.Row;
+            container.style.alignItems = Align.Center;
             
-            public void Initialize(string name, Color color, Action<Color> callback)
-            {
-                colorName = name;
-                currentColor = color;
-                originalColor = color;
-                onColorChanged = callback;
-                minSize = new Vector2(250, 100);
-                maxSize = new Vector2(250, 100);
-            }
+            var labelElement = new Label($"{label}:");
+            labelElement.style.fontSize = 11;
+            labelElement.style.width = 60;
+            container.Add(labelElement);
             
-            void OnGUI()
+            var colorField = new ColorField();
+            colorField.value = value;
+            colorField.style.flexShrink = 1;
+            colorField.showAlpha = true;
+            colorField.style.width = 100;
+            colorField.RegisterValueChangedCallback(evt =>
             {
-                EditorGUILayout.LabelField($"{colorName} Color", EditorStyles.boldLabel);
-                
-                EditorGUI.BeginChangeCheck();
-                currentColor = EditorGUILayout.ColorField(currentColor);
-                if (EditorGUI.EndChangeCheck())
-                {
-                    onColorChanged?.Invoke(currentColor);
-                    SceneView.RepaintAll();
-                }
-                
-                EditorGUILayout.Space();
-                
-                using (new EditorGUILayout.HorizontalScope())
-                {
-                    if (GUILayout.Button("Reset"))
-                    {
-                        currentColor = originalColor;
-                        onColorChanged?.Invoke(currentColor);
-                        SceneView.RepaintAll();
-                    }
-                    
-                    if (GUILayout.Button("Close"))
-                    {
-                        Close();
-                    }
-                }
-            }
+                onValueChanged?.Invoke(evt.newValue);
+                SceneView.RepaintAll();
+            });
+            container.Add(colorField);
+            
+            return container;
         }
         
         private static void OnSceneGUI(SceneView sceneView)

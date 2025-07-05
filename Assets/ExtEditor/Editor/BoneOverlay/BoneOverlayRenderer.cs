@@ -18,6 +18,9 @@ namespace ExtEditor.BoneOverlay
         private float lastClickTime;
         private Transform lastClickedBone;
         
+        // ラベルインタラクション用
+        private Transform clickedLabelBone = null;
+        
         public BoneOverlayRenderer(BoneOverlayState state, BoneDetector detector)
         {
             this.state = state;
@@ -28,7 +31,6 @@ namespace ExtEditor.BoneOverlay
         
         public void DrawBones(SceneView sceneView, List<BoneDetector.BoneInfo> bones)
         {
-            // Debug.Log("DrawBones");
             if (bones == null || bones.Count == 0) return;
             
             // カメラ情報取得
@@ -41,15 +43,17 @@ namespace ExtEditor.BoneOverlay
             // 距離キャッシュを更新
             UpdateDistanceCache(bones, cameraPos);
             
-            // Handlesの設定
-            Handles.BeginGUI();
-            
             // マウス位置取得
             var mousePos = Event.current.mousePosition;
             Transform closestBone = null;
             float closestDistance = float.MaxValue;
             
+            // ラベルクリックの結果をリセット
+            clickedLabelBone = null;
+            
             // ボーンの描画とインタラクション
+            var labelsToRender = new List<(Transform bone, Color color)>();
+            
             foreach (var boneInfo in bones)
             {
                 var bone = boneInfo.Transform;
@@ -89,27 +93,52 @@ namespace ExtEditor.BoneOverlay
                 }
                 
                 // ボーンの球体を描画
-                var screenPos = DrawBoneSphere(camera, bone, boneColor, out bool isHovered);
+                var screenPosAndSize = DrawBoneSphere(camera, bone, boneColor, out bool isHovered);
                 
                 // マウスとの距離をチェック
-                if (screenPos.HasValue)
+                if (screenPosAndSize.HasValue)
                 {
-                    float screenDistance = Vector2.Distance(mousePos, screenPos.Value);
-                    if (screenDistance < CLICK_THRESHOLD && screenDistance < closestDistance)
+                    var screenPos = new Vector2(screenPosAndSize.Value.x, screenPosAndSize.Value.y);
+                    var screenRadius = screenPosAndSize.Value.z;
+                    float screenDistance = Vector2.Distance(mousePos, screenPos);
+                    if (screenDistance < screenRadius && screenDistance < closestDistance)
                     {
                         closestDistance = screenDistance;
                         closestBone = bone;
                     }
                 }
                 
-                // ラベルを描画
-                if (state.ShowLabels && alpha > 0.3f)
+                // ラベルを描画リストに追加（距離フィルタリング付き）
+                if (state.ShowLabels && distance <= state.MaxLabelRenderDistance)
                 {
-                    DrawBoneLabel(camera, bone, boneColor);
+                    // ラベル用のアルファ計算
+                    float labelAlpha = 1.0f;
+                    if (state.DistanceFadeEnabled)
+                    {
+                        float labelFadeRange = state.MaxLabelRenderDistance * 0.2f;
+                        labelAlpha = Mathf.Clamp01((state.MaxLabelRenderDistance - distance) / labelFadeRange);
+                    }
+                    
+                    if (labelAlpha > 0.1f)
+                    {
+                        var labelColor = state.LabelColor;
+                        labelColor.a *= labelAlpha * alpha;
+                        labelsToRender.Add((bone, labelColor));
+                    }
                 }
             }
             
-            Handles.EndGUI();
+            // ラベルをHandles.Buttonで描画
+            foreach (var (bone, color) in labelsToRender)
+            {
+                DrawBoneLabel(camera, bone, color);
+            }
+            
+            // ラベルクリックがあった場合は、それを優先
+            if (clickedLabelBone != null)
+            {
+                closestBone = clickedLabelBone;
+            }
             
             // ホバー状態の更新
             hoveredBone = closestBone;
@@ -175,13 +204,33 @@ namespace ExtEditor.BoneOverlay
             Handles.DrawAAPolyLine(state.LineWidth, start, end);
         }
         
-        private Vector2? DrawBoneSphere(Camera camera, Transform bone, Color color, out bool isHovered)
+        private Vector3? DrawBoneSphere(Camera camera, Transform bone, Color color, out bool isHovered)
         {
             isHovered = false;
             
             // スクリーン座標を計算
             var screenPos = camera.WorldToScreenPoint(bone.position);
             if (screenPos.z < 0) return null;
+            
+            // 透視投影カメラの場合
+            float screenRadius;
+            if (!camera.orthographic)
+            {
+                // 半径ぶんだけカメラの “右方向” にオフセットした点をスクリーン変換
+                Vector3 offsetPos = bone.position + camera.transform.right * state.SphereSize;
+                Vector3 edgeOnScreen = camera.WorldToScreenPoint(offsetPos);
+
+                // 中心→端 の長さがピクセル半径
+                float pixelRadius = (edgeOnScreen - screenPos).magnitude;
+                screenRadius = pixelRadius;  // 直径
+            }
+            // 正射影カメラの場合
+            else
+            {
+                // orthographicSize = 画面の半縦幅(world) なので
+                float pixelsPerUnit = camera.pixelHeight / (camera.orthographicSize * 2f);
+                screenRadius = state.SphereSize * state.SphereSize * pixelsPerUnit;   // 直径
+            }
             
             // GUIポイントに変換
             var guiPoint = new Vector2(screenPos.x, camera.pixelHeight - screenPos.y);
@@ -223,19 +272,50 @@ namespace ExtEditor.BoneOverlay
                 );
             }
             
-            return guiPoint;
+            return new Vector3(guiPoint.x, guiPoint.y, screenRadius);
         }
         
         private void DrawBoneLabel(Camera camera, Transform bone, Color color)
         {
-            var style = new GUIStyle(GUI.skin.label);
+            // ラベル位置を少しオフセット
+            var labelPos = bone.position + camera.transform.up * state.SphereSize;
+            
+            // Handles.Buttonのスタイルを作成
+            var style = new GUIStyle("Label");
             style.fontSize = Mathf.RoundToInt(state.LabelSize);
             style.normal.textColor = color;
-            style.alignment = TextAnchor.MiddleLeft;
+            style.alignment = TextAnchor.LowerLeft;
+            style.padding = new RectOffset(4, 4, 2, 2);
+            style.hover.textColor = Color.green;
             
-            // ラベル位置を少しオフセット
-            var labelPos = bone.position + camera.transform.right * state.SphereSize * 2f;
-            Handles.Label(labelPos, bone.name, style);
+            // コンテンツを作成
+            var content = new GUIContent(bone.name);
+            
+            // Handles.Buttonで描画とクリック検出を同時に行う
+            Handles.BeginGUI();
+            
+            // スクリーン座標に変換
+            var screenPos = camera.WorldToScreenPoint(labelPos)+new Vector3(0, 10, 0);
+            if (screenPos.z > 0)
+            {
+                var guiPoint = new Vector2(screenPos.x, camera.pixelHeight - screenPos.y);
+                var size = style.CalcSize(content);
+                var rect = new Rect(guiPoint.x-size.x*0.5f, guiPoint.y - size.y * 0.5f, size.x, size.y);
+                
+                // 透明なボタンとして描画し、クリックを検出
+                var oldContentColor = GUI.contentColor;
+                GUI.contentColor = color;
+                
+                if (GUI.Button(rect, content, style))
+                {
+                    clickedLabelBone = bone;
+                    Event.current.Use();
+                }
+                
+                GUI.contentColor = oldContentColor;
+            }
+            
+            Handles.EndGUI();
         }
         
         private void HandleMouseInteraction(Transform closestBone)
@@ -244,20 +324,20 @@ namespace ExtEditor.BoneOverlay
             
             var evt = Event.current;
             
-            if (evt.type == EventType.MouseDown && evt.button == 0)
+            if (evt.type == EventType.MouseDown && evt.button == 0 || evt.type == EventType.Used && evt.button == 0)
             {
                 // ダブルクリック検出
                 float timeSinceLastClick = Time.realtimeSinceStartup - lastClickTime;
-                bool isDoubleClick = (timeSinceLastClick < 0.3f && lastClickedBone == closestBone);
+                // bool isDoubleClick = (timeSinceLastClick < 0.3f && lastClickedBone == closestBone);
                 
-                if (isDoubleClick)
-                {
-                    // ダブルクリック: 階層で展開してフォーカス
-                    EditorGUIUtility.PingObject(closestBone.gameObject);
-                    Selection.activeTransform = closestBone;
-                    SceneView.FrameLastActiveSceneView();
-                }
-                else
+                // if (isDoubleClick)
+                // {
+                //     // ダブルクリック: 階層で展開してフォーカス
+                //     EditorGUIUtility.PingObject(closestBone.gameObject);
+                //     Selection.activeTransform = closestBone;
+                //     SceneView.FrameLastActiveSceneView();
+                // }
+                // else
                 {
                     // シングルクリック: 選択
                     if (evt.shift || evt.control || evt.command)
