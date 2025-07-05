@@ -28,6 +28,7 @@ namespace ExtEditor.BoneOverlay
         
         public void DrawBones(SceneView sceneView, List<BoneDetector.BoneInfo> bones)
         {
+            // Debug.Log("DrawBones");
             if (bones == null || bones.Count == 0) return;
             
             // カメラ情報取得
@@ -217,7 +218,7 @@ namespace ExtEditor.BoneOverlay
                     controlId,
                     bone.position,
                     Quaternion.identity,
-                    scaledSize * 1.5f,
+                    scaledSize * 1.2f,
                     EventType.Repaint
                 );
             }

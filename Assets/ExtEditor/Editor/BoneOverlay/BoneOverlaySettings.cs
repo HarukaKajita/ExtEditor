@@ -12,7 +12,7 @@ namespace ExtEditor.BoneOverlay
         [Header("Display Settings")]
         public bool showLabels = true;
         public float lineWidth = 2f;
-        public float sphereSize = 0.1f;
+        public float sphereSize = 0.01f;
         public float labelSize = 10f;
         
         [Header("Distance Filter")]

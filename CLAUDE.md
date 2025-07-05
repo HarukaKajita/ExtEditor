@@ -28,18 +28,19 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - 二言語ドキュメント（英語/日本語READMEファイル）※一部ツールのみ
 
 ### コアツール構造
-**Assets/ExtEditor/Editor/** に11個の独立したエディターツール:
+**Assets/ExtEditor/Editor/** に12個の独立したエディターツール:
 1. `BatchRename/` - 高度なパターンマッチングによる一括アセット名変更
 2. `BlendShapeFixPostProcessor/` - BlendShape処理ユーティリティ
-3. `CaptureWindow/` - スクリーンショット撮影（最も複雑、MVVM風アーキテクチャ）
-4. `CopySelectMenu/` - コピー・選択ユーティリティ
-5. `ExportPackageConfig/` - パッケージエクスポート設定
-6. `FolderMenuItemExtension/` - カスタムフォルダー構造テンプレート
-7. `MaterialPropertyCopier/` - マテリアル間でのシェーダープロパティコピー
-8. `ReserializeMenuItem/` - アセット再シリアライゼーションユーティリティ
-9. `SelectionDataEditor/` - ScriptableObjectを使用したオブジェクト選択の保存/管理
-10. `Texture2DArrayMaker/` - Texture2DArray作成ツール
-11. `UberMaterialPropertyDrawer/` - グループ化システムを持つ高度なMaterial Inspector（2番目に複雑）
+3. `BoneOverlay/` - Scene Viewでのボーン可視化・選択ツール（EditorToolbarDropdownToggle使用）
+4. `CaptureWindow/` - スクリーンショット撮影（最も複雑、MVVM風アーキテクチャ）
+5. `CopySelectMenu/` - コピー・選択ユーティリティ
+6. `ExportPackageConfig/` - パッケージエクスポート設定
+7. `FolderMenuItemExtension/` - カスタムフォルダー構造テンプレート
+8. `MaterialPropertyCopier/` - マテリアル間でのシェーダープロパティコピー
+9. `ReserializeMenuItem/` - アセット再シリアライゼーションユーティリティ
+10. `SelectionDataEditor/` - ScriptableObjectを使用したオブジェクト選択の保存/管理
+11. `Texture2DArrayMaker/` - Texture2DArray作成ツール
+12. `UberMaterialPropertyDrawer/` - グループ化システムを持つ高度なMaterial Inspector（2番目に複雑）
 
 ### 主要コンポーネント詳細
 
@@ -51,6 +52,13 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - `CaptureValidator.cs` - 入力検証
 - `CaptureLocalization.cs` - 多言語対応
 - 包括的なAPI（`README_API.md`にドキュメント化）
+
+**BoneOverlay (最新のツールバー統合ツール):**
+- `BoneOverlayDropdownToggle.cs` - EditorToolbarDropdownToggleベースのUI
+- `BoneOverlayToolbar.cs` - ToolbarOverlayでScene View統合
+- `BoneDetector.cs` - ボーン自動検出システム
+- `BoneOverlayRenderer.cs` - Gizmo描画と距離フィルタリング
+- 距離ベースフィルタリングと選択状態による色変更機能
 
 **UberMaterialPropertyDrawer System:**
 - `UberDrawer.cs` - メインプロパティドローワーディスパッチャー
