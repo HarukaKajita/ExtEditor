@@ -4,20 +4,20 @@
 
 ## ツール概要
 
-BoneOverlayツールは、Unity SceneViewでジョイント（ボーン）を可視化し、選択を簡単にするツールバーベースのエディター拡張です。Unity 2022.3以降のEditorToolbarDropdownToggle APIを使用し、Scene Viewのツールバーに統合されています。
+BoneOverlayツールは、Unity SceneViewでジョイント（ボーン）を可視化し、選択を簡単にするツールバーベースのエディター拡張です。Unity 2022.3以降のEditorToolbarDropdownToggle APIを使用し、Scene Viewのツールバーに統合されています。ジョイントは基本的にEmptyObjectで選択が難しいため、視覚的な表現とインタラクティブな選択機能を提供します。
 
 ## 主要機能
 
 ### 基本機能
-- **EditorToolbarDropdownToggleベース**: Scene Viewツールバーに統合
-- **ボーン自動検出**: SkinnedMeshRenderer、Animator、名前パターンから推定
+- **EditorToolbarDropdownToggleベース**: Scene Viewツールバーに統合（アイコン付きトグル）
+- **ボーン自動検出**: SkinnedMeshRenderer、Animator、名前パターンから推定（重複排除）
 - **インタラクティブ可視化**: クリック可能な球体と親子間の線分
 - **距離ベースフィルタリング**: 常時有効、ボーンとラベルで個別設定可能
 - **選択状態による色変更**: 通常/選択/ホバーで異なる色表示
-- **ダブルクリック機能**: 階層での展開とフォーカス
+- **クリック機能**: シングルクリックで選択、Shift/Ctrlで複数選択
 - **カラーカスタマイズ**: ドロップダウンメニュー内で直接色設定
 - **ラベルインタラクション**: ラベルクリックでもオブジェクト選択可能
-- **調整可能パラメータ**: 球体サイズ、線の太さ、ラベルカラー
+- **調整可能パラメータ**: 球体サイズ、線の太さ、ラベルサイズ、各種色設定
 
 ### 距離フィルタリング（常時有効）
 - **ボーン表示距離**: 最大50m（デフォルト）、調整可能
@@ -27,14 +27,15 @@ BoneOverlayツールは、Unity SceneViewでジョイント（ボーン）を可
 
 ### 使用方法
 1. Scene Viewのツールバーで`Overlays`メニューから`Bone Overlay Toolbar`を有効化
-2. ツールバーに表示される`Bones`トグルをオンにする
+2. ツールバーに表示される`Bones`トグル（AvatarMaskアイコン）をオンにする
 3. ドロップダウン矢印をクリックして設定メニューを開く
 4. 各種設定を調整:
-   - Bone Settings: ボーン表示距離、球体サイズ、線の太さ
-   - Label Settings: ラベル表示のオン/オフ、表示距離
-   - Colors: 各状態の色をカラーフィールドで直接設定
+   - Bone Settings: ボーン表示距離、球体サイズ、線の太さ、ボーン関連の色
+   - Label Settings: ラベル表示のオン/オフ、表示距離、サイズ、ラベル色
 5. シーン内のボーンが自動的に可視化される
-6. ボーンの球体またはラベルをクリックして選択、ダブルクリックで階層表示
+6. ボーンの球体またはラベルをクリックして選択
+   - 通常クリック: 単独選択
+   - Shift/Ctrl+クリック: 複数選択の追加/削除
 
 ## 実装詳細
 
@@ -64,6 +65,7 @@ BoneOverlayツールは、Unity SceneViewでジョイント（ボーン）を可
 ### 描画システム
 - **Handles API使用**: DrawAAPolyLine（線）、SphereHandleCap（球体）
 - **ラベル描画**: GUI.Button（Handles.BeginGUI/EndGUI内）でクリック可能なラベル
+- **スクリーン座標変換**: 球体のピクセル半径を正確に計算（透視/正投影対応）
 - **距離ベースLOD**: 近距離でフル詳細、遠距離で簡易表示
 - **アルファブレンディング**: 距離によるフェード効果
 
@@ -92,6 +94,9 @@ BoneOverlayツールは、Unity SceneViewでジョイント（ボーン）を可
 - **改善されたUI**: カラーピッカーウィンドウを廃止し、ドロップダウン内で完結
 - **ラベルインタラクション**: GUI.Buttonを使用してラベルをクリック可能に
 - **UIレイアウト**: 色設定を各セクション（Bone Settings、Label Settings）に統合
+- **球体クリック判定の改善**: スクリーン座標での正確な半径計算
+- **ラベル位置調整**: 球体の上部に表示（camera.transform.up使用）
+- **デフォルトラベル色**: 水色系（0.4f, 0.7f, 1f）に変更
 
 ## 現在の課題
 
@@ -136,16 +141,16 @@ Bones [▼]
 ├─ Bone Settings
 │  ├─ Bone Distance: [50.0]m ──────
 │  ├─ Sphere Size: [5.0]mm ────────
-│  └─ Line Width: [2.0] ───────────
+│  ├─ Line Width: [2.0] ───────────
+│  ├─ Normal Color: [■] 
+│  ├─ Selected Color: [■]
+│  ├─ Hover Color: [■]
+│  └─ Line Color: [■]
 ├─ Label Settings  
 │  ├─ □ Show Labels
-│  └─ Label Distance: [30.0]m ─────
-├─ Colors
-│  ├─ Normal: [■] (カラーフィールド)
-│  ├─ Selected: [■] (カラーフィールド)
-│  ├─ Hover: [■] (カラーフィールド)
-│  ├─ Line: [■] (カラーフィールド)
-│  └─ Label: [■] (カラーフィールド)
+│  ├─ Label Distance: [30.0]m ─────
+│  ├─ Label Size: [10.0]pt ────────
+│  └─ Label Color: [■]
 ├─ [Reset to Defaults]
 └─ Detected Bones: 42
 ```
