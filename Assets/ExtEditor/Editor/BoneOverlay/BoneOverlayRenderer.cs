@@ -280,38 +280,39 @@ namespace ExtEditor.BoneOverlay
             // ラベル位置を少しオフセット
             var labelPos = bone.position + camera.transform.up * state.SphereSize;
             
-            // Handles.Buttonのスタイルを作成
+            // ラベルのスタイルを作成
             var style = new GUIStyle("Label");
             style.fontSize = Mathf.RoundToInt(state.LabelSize);
             style.normal.textColor = color;
             style.alignment = TextAnchor.LowerLeft;
             style.padding = new RectOffset(4, 4, 2, 2);
-            style.hover.textColor = Color.green;
             
             // コンテンツを作成
             var content = new GUIContent(bone.name);
             
-            // Handles.Buttonで描画とクリック検出を同時に行う
+            // GUI描画とクリック検出
             Handles.BeginGUI();
             
             // スクリーン座標に変換
-            var screenPos = camera.WorldToScreenPoint(labelPos)+new Vector3(0, 10, 0);
+            var screenPos = camera.WorldToScreenPoint(labelPos) + new Vector3(0, 10, 0);
             if (screenPos.z > 0)
             {
                 var guiPoint = new Vector2(screenPos.x, camera.pixelHeight - screenPos.y);
                 var size = style.CalcSize(content);
-                var rect = new Rect(guiPoint.x-size.x*0.5f, guiPoint.y - size.y * 0.5f, size.x, size.y);
+                var rect = new Rect(guiPoint.x - size.x * 0.5f, guiPoint.y - size.y * 0.5f, size.x, size.y);
                 
-                // 透明なボタンとして描画し、クリックを検出
-                var oldContentColor = GUI.contentColor;
-                GUI.contentColor = color;
-                
-                if (GUI.Button(rect, content, style))
+                // 左クリックのみを検出
+                var evt = Event.current;
+                if (evt.type == EventType.MouseDown && evt.button == 0 && rect.Contains(evt.mousePosition))
                 {
                     clickedLabelBone = bone;
-                    Event.current.Use();
+                    evt.Use(); // 左クリックのみイベントを消費
                 }
                 
+                // ラベルを描画
+                var oldContentColor = GUI.contentColor;
+                GUI.contentColor = color;
+                GUI.Label(rect, content, style);
                 GUI.contentColor = oldContentColor;
             }
             
