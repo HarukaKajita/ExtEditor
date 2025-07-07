@@ -184,12 +184,12 @@ namespace ExtEditor.BoneOverlay
             
             var labelElement = new Label($"{label}: {value:F1}{suffix}");
             labelElement.style.fontSize = 11;
-            labelElement.style.marginBottom = 2;
             container.Add(labelElement);
             
             var slider = new Slider(min, max);
             slider.value = value;
             slider.style.width = 180;
+            slider.style.marginBottom = 2;
             slider.RegisterValueChangedCallback(evt =>
             {
                 var roundedValue = Mathf.Round(evt.newValue / step) * step;
@@ -208,18 +208,18 @@ namespace ExtEditor.BoneOverlay
             container.style.paddingLeft = 20;
             container.style.paddingRight = 10;
             container.style.flexDirection = FlexDirection.Row;
-            container.style.alignItems = Align.Center;
             
             var labelElement = new Label($"{label}:");
             labelElement.style.fontSize = 11;
             labelElement.style.width = 60;
+            labelElement.style.flexGrow = 1;
             container.Add(labelElement);
             
             var colorField = new ColorField();
             colorField.value = value;
             colorField.style.flexShrink = 1;
             colorField.showAlpha = true;
-            colorField.style.width = 100;
+            colorField.style.width = 70;
             colorField.RegisterValueChangedCallback(evt =>
             {
                 onValueChanged?.Invoke(evt.newValue);
