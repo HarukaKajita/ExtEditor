@@ -13,11 +13,6 @@ namespace ExtEditor.BoneOverlay
         private Dictionary<Transform, float> boneDistanceCache;
         private int lastFrameCount = -1;
         
-        // クリック検出用
-        private const float CLICK_THRESHOLD = 10f;
-        private float lastClickTime;
-        private Transform lastClickedBone;
-        
         // ラベルインタラクション用
         private Transform clickedLabelBone = null;
         
@@ -248,13 +243,6 @@ namespace ExtEditor.BoneOverlay
             
             if (eventType == EventType.Repaint)
             {
-                // Handles.SphereHandleCap(
-                //     controlId,
-                //     bone.position,
-                //     Quaternion.identity,
-                //     scaledSize,
-                //     EventType.Repaint
-                // );
                 Handles.DrawSolidDisc(bone.position,dirForCamera, scaledSize);
             }
             
@@ -264,13 +252,6 @@ namespace ExtEditor.BoneOverlay
                 isHovered = true;
                 // ホバー時は少し大きく描画
                 Handles.color = new Color(color.r, color.g, color.b, color.a * 0.3f);
-                // Handles.SphereHandleCap(
-                //     controlId,
-                //     bone.position,
-                //     Quaternion.identity,
-                //     scaledSize * 1.2f,
-                //     EventType.Repaint
-                // );
                 Handles.DrawSolidDisc(bone.position,dirForCamera, scaledSize * 1.2f);
             }
             
@@ -329,44 +310,27 @@ namespace ExtEditor.BoneOverlay
             
             if (evt.type == EventType.MouseDown && evt.button == 0 || evt.type == EventType.Used && evt.button == 0)
             {
-                // ダブルクリック検出
-                float timeSinceLastClick = Time.realtimeSinceStartup - lastClickTime;
-                // bool isDoubleClick = (timeSinceLastClick < 0.3f && lastClickedBone == closestBone);
                 
-                // if (isDoubleClick)
-                // {
-                //     // ダブルクリック: 階層で展開してフォーカス
-                //     EditorGUIUtility.PingObject(closestBone.gameObject);
-                //     Selection.activeTransform = closestBone;
-                //     SceneView.FrameLastActiveSceneView();
-                // }
-                // else
+                // シングルクリック: 選択
+                if (evt.shift || evt.control || evt.command)
                 {
-                    // シングルクリック: 選択
-                    if (evt.shift || evt.control || evt.command)
+                    // 追加選択
+                    var currentSelection = new List<Object>(Selection.objects);
+                    if (currentSelection.Contains(closestBone.gameObject))
                     {
-                        // 追加選択
-                        var currentSelection = new List<Object>(Selection.objects);
-                        if (currentSelection.Contains(closestBone.gameObject))
-                        {
-                            currentSelection.Remove(closestBone.gameObject);
-                        }
-                        else
-                        {
-                            currentSelection.Add(closestBone.gameObject);
-                        }
-                        Selection.objects = currentSelection.ToArray();
+                        currentSelection.Remove(closestBone.gameObject);
                     }
                     else
                     {
-                        // 単独選択
-                        Selection.activeTransform = closestBone;
+                        currentSelection.Add(closestBone.gameObject);
                     }
+                    Selection.objects = currentSelection.ToArray();
                 }
-                
-                lastClickTime = Time.realtimeSinceStartup;
-                lastClickedBone = closestBone;
-                
+                else
+                {
+                    // 単独選択
+                    Selection.activeTransform = closestBone;
+                }
                 evt.Use();
             }
         }
