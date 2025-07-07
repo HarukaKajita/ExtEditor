@@ -129,8 +129,8 @@ namespace ExtEditor.BoneOverlay
                 DrawBoneLabel(camera, bone, color);
             }
             
-            // ラベルクリックがあった場合は、それを優先
-            if (clickedLabelBone != null)
+            // ボーンがクリックされていないが、ラベルがクリックされている場合は、ラベルのボーンをクリックとみなす
+            if (closestBone == null && clickedLabelBone != null)
             {
                 closestBone = clickedLabelBone;
             }
@@ -318,7 +318,7 @@ namespace ExtEditor.BoneOverlay
                     var currentSelection = new List<Object>(Selection.objects);
                     if (currentSelection.Contains(closestBone.gameObject))
                     {
-                        currentSelection.Remove(closestBone.gameObject);
+                        currentSelection.Remove(closestBone.gameObject.transform);
                     }
                     else
                     {
