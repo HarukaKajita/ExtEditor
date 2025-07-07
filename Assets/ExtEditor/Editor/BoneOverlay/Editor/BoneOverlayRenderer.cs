@@ -238,8 +238,8 @@ namespace ExtEditor.BoneOverlay
             // 距離に基づいてサイズを調整
             float distance = boneDistanceCache.ContainsKey(bone) ? boneDistanceCache[bone] : 10f;
             float scaledSize = state.SphereSize * Mathf.Clamp(5f / distance, 0.5f, 2f);
-            
-            // 球体を描画
+            var dirForCamera = (bone.position - camera.transform.position).normalized;
+            // 円を描画
             Handles.color = color;
             
             // カスタムハンドルキャップを使用
@@ -248,13 +248,14 @@ namespace ExtEditor.BoneOverlay
             
             if (eventType == EventType.Repaint)
             {
-                Handles.SphereHandleCap(
-                    controlId,
-                    bone.position,
-                    Quaternion.identity,
-                    scaledSize,
-                    EventType.Repaint
-                );
+                // Handles.SphereHandleCap(
+                //     controlId,
+                //     bone.position,
+                //     Quaternion.identity,
+                //     scaledSize,
+                //     EventType.Repaint
+                // );
+                Handles.DrawSolidDisc(bone.position,dirForCamera, scaledSize);
             }
             
             // ホバー状態チェック
@@ -263,13 +264,14 @@ namespace ExtEditor.BoneOverlay
                 isHovered = true;
                 // ホバー時は少し大きく描画
                 Handles.color = new Color(color.r, color.g, color.b, color.a * 0.3f);
-                Handles.SphereHandleCap(
-                    controlId,
-                    bone.position,
-                    Quaternion.identity,
-                    scaledSize * 1.2f,
-                    EventType.Repaint
-                );
+                // Handles.SphereHandleCap(
+                //     controlId,
+                //     bone.position,
+                //     Quaternion.identity,
+                //     scaledSize * 1.2f,
+                //     EventType.Repaint
+                // );
+                Handles.DrawSolidDisc(bone.position,dirForCamera, scaledSize * 1.2f);
             }
             
             return new Vector3(guiPoint.x, guiPoint.y, screenRadius);
