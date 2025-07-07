@@ -175,8 +175,8 @@ namespace ExtEditor.BoneOverlay
         private Color GetBoneColor(Transform bone)
         {
             // 選択状態をチェック
-            if (Selection.activeTransform == bone || 
-                (Selection.transforms != null && Selection.transforms.Contains(bone)))
+            if (Selection.activeGameObject == bone.gameObject || 
+                (Selection.gameObjects != null && Selection.gameObjects.Contains(bone.gameObject)))
             {
                 return state.SelectedColor;
             }
@@ -315,10 +315,10 @@ namespace ExtEditor.BoneOverlay
                 if (evt.shift || evt.control || evt.command)
                 {
                     // 追加選択
-                    var currentSelection = new List<Object>(Selection.objects);
+                    var currentSelection = new List<Object>(Selection.gameObjects);
                     if (currentSelection.Contains(closestBone.gameObject))
                     {
-                        currentSelection.Remove(closestBone.gameObject.transform);
+                        currentSelection.Remove(closestBone.gameObject);
                     }
                     else
                     {
@@ -329,9 +329,12 @@ namespace ExtEditor.BoneOverlay
                 else
                 {
                     // 単独選択
-                    Selection.activeTransform = closestBone;
+                    Selection.activeGameObject = closestBone.gameObject;
                 }
                 evt.Use();
+                
+                // 選択変更後に即座に再描画
+                SceneView.RepaintAll();
             }
         }
         
