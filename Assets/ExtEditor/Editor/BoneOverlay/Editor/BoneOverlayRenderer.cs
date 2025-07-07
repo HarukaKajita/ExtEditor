@@ -224,7 +224,7 @@ namespace ExtEditor.BoneOverlay
             {
                 // orthographicSize = 画面の半縦幅(world) なので
                 float pixelsPerUnit = camera.pixelHeight / (camera.orthographicSize * 2f);
-                screenRadius = state.SphereSize * state.SphereSize * pixelsPerUnit;   // 直径
+                screenRadius = state.SphereSize * pixelsPerUnit;   // 直径
             }
             
             // GUIポイントに変換
@@ -232,7 +232,7 @@ namespace ExtEditor.BoneOverlay
             
             // 距離に基づいてサイズを調整
             float distance = boneDistanceCache.ContainsKey(bone) ? boneDistanceCache[bone] : 10f;
-            float scaledSize = state.SphereSize * Mathf.Clamp(5f / distance, 0.5f, 2f);
+            float scaledSize = state.SphereSize * Mathf.Clamp(5f / distance, 0.5f, 2f)/2;
             var dirForCamera = (bone.position - camera.transform.position).normalized;
             // 円を描画
             Handles.color = color;
