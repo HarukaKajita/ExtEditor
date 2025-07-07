@@ -98,6 +98,18 @@ BoneOverlayツールは、Unity SceneViewでジョイント（ボーン）を可
 - **ラベル位置調整**: 球体の上部に表示（camera.transform.up使用）
 - **デフォルトラベル色**: 水色系（0.4f, 0.7f, 1f）に変更
 
+### 2025-01-07 更新 - 複数選択バグ修正とドキュメント改善
+- **バグ修正**: BoneOverlayRenderer.cs の HandleMouseInteraction メソッドで、選択解除時に `closestBone.gameObject.transform` を削除しようとしていたバグを修正
+  - 修正前: `currentSelection.Remove(closestBone.gameObject.transform);`
+  - 修正後: `currentSelection.Remove(closestBone.gameObject);`
+- **選択状態の即時反映**: HandleMouseInteraction の最後に `SceneView.RepaintAll()` を追加
+- **コード最適化**: Selection API を `Selection.transforms` から `Selection.gameObjects` に統一
+- **デバッグ機能削除**: 簡潔性のためデバッグログコードを削除
+- **ドキュメント全面改善**:
+  - README: よりユーザーフレンドリーな説明、具体的なトラブルシューティング追加
+  - QuickStart: 2分以内で使い始められる簡潔なガイドに改善
+  - TechnicalSpecs: 最新のアーキテクチャとバグ修正内容を反映
+
 ## 現在の課題
 
 ### Critical

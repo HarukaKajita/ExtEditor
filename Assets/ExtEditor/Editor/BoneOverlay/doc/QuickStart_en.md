@@ -1,68 +1,73 @@
 # BoneOverlay Quick Start Guide
 
-This guide explains how to get started with the BoneOverlay tool in the shortest time possible.
+Get started with BoneOverlay in under 2 minutes! 🚀
 
 ## 📋 Prerequisites
 
-- Unity 2022.3 or later installed
-- A 3D model (with SkinnedMeshRenderer) placed in the scene
+- Unity 2022.3 or later
+- A scene with any 3D model (character, avatar, etc.)
 
-## 🚀 Get Started in 3 Steps
+## 🎯 3 Simple Steps
 
-### Step 1: Show the Toolbar
+### Step 1: Enable the Toolbar
 
-Click the "⋮" menu in the top-right of Scene View, then check "Overlays" → "Bone Overlay Toolbar".
+Open Scene View and click the **⋮** (three dots) menu in the top-right corner.
 
-[Image: Overlays menu operation]
+Navigate to: **Overlays** → **Bone Overlay Toolbar** ✓
 
-### Step 2: Enable Bone Display
+![Enable Toolbar](images/enable-toolbar.png)
 
-Click the "Bones" button that appears in the Scene View toolbar.
+### Step 2: Turn On Bone Display
 
-[Image: Clicking the Bones button]
+Click the **Bones** button in your Scene View toolbar. It will turn blue when active.
 
-### Step 3: Select Bones
+![Bones Button](images/bones-button.png)
 
-Click on the displayed bone spheres or labels to select them.
+✨ **That's it!** You should now see colorful disc markers on all bones in your scene.
 
-[Image: Selecting a bone]
+### Step 3: Start Selecting!
 
-## ✨ That's It!
+- **Click** any disc or label to select a bone
+- **Shift+Click** to add more bones to selection
+- **Ctrl/Cmd+Click** to toggle selection
 
-That's all you need to know for basic usage. Bones are now visually displayed and easily selectable.
+![Selecting Bones](images/selecting-bones.gif)
 
-## 📝 Common Operations
+## 🎨 Quick Customization
 
-### Multiple Selection
-- **Shift + Click**: Add to selection
-- **Ctrl/Cmd + Click**: Toggle add/remove from selection
+Need different colors or sizes? Click the **▼** arrow next to the Bones button:
 
-### Display Adjustment (Optional)
-Click the "▼" next to the "Bones" button to open the settings menu:
+- **Sphere Size**: Make discs bigger/smaller
+- **Colors**: Change colors to your preference
+- **Labels**: Toggle bone names on/off
 
-- **Sphere Size**: Adjust bone sphere size
-- **Show Labels**: Toggle object name display
-- **Bone Distance**: Maximum display distance
+## 💡 Pro Tips
 
-[Image: Settings menu]
+1. **Can't see bones?** → Increase "Bone Distance" in settings (default: 50m)
+2. **Too cluttered?** → Turn off "Show Labels" or reduce "Bone Distance"
+3. **Hard to click?** → Increase "Sphere Size" for easier selection
 
-## 💡 Helpful Tips
+## ⚡ Common Shortcuts
 
-1. **Change to Visible Colors**: If the background is dark, adjust colors to be brighter in the settings menu
-2. **Labels Are Clickable**: You can click not only spheres but also object name labels
-3. **Distance Filter**: In large scenes, set a shorter distance to show only necessary parts
+| Action | Shortcut |
+|--------|----------|
+| Single Select | Click |
+| Add to Selection | Shift + Click |
+| Toggle Selection | Ctrl/Cmd + Click |
+| Select All Bones | Select parent → Shift+G (Unity's Select Children) |
 
-## ❓ Troubleshooting
+## 🆘 Quick Fixes
 
-### Bones Not Showing
-→ Check if there's a model with SkinnedMeshRenderer in the scene
+**No bones showing?**
+- Make sure you have a model with SkinnedMeshRenderer or Animator
+- Check if the Bones button is blue (active)
 
-### Cannot Select
-→ Verify Scene View is in the appropriate mode (Move/Rotate/Scale tools, etc.)
-
-### Heavy/Laggy Performance
-→ Try setting "Bone Distance" shorter (e.g., 10m) in the settings menu
+**Selection not working properly?**
+- Update to v1.0.1 for fixed multi-selection
+- Try clicking the label instead of the disc
 
 ---
 
-For detailed features and settings, please refer to the [Complete Manual](README_en.md).
+Ready for more? Check out the [Full Documentation](README_en.md) for advanced features!
+
+Happy rigging! 🎉

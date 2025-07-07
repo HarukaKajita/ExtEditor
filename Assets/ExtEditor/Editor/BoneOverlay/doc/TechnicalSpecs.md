@@ -8,12 +8,20 @@ BoneOverlay is built using Unity's modern EditorToolbarDropdownToggle API, provi
 
 ```
 BoneOverlay/
-├── BoneOverlayDropdownToggle.cs    # Main toolbar UI element
-├── BoneOverlayToolbar.cs           # Toolbar overlay container
-├── BoneOverlayState.cs             # Persistent settings management
-├── BoneDetector.cs                 # Bone detection logic
-├── BoneOverlayRenderer.cs          # Visualization and interaction
-└── BoneOverlaySettings.cs          # ScriptableObject (future use)
+├── Editor/
+│   ├── BoneOverlayDropdownToggle.cs    # Main toolbar UI element
+│   ├── BoneOverlayToolbar.cs           # Toolbar overlay container
+│   ├── BoneOverlayState.cs             # Persistent settings management
+│   ├── BoneDetector.cs                 # Bone detection logic
+│   ├── BoneOverlayRenderer.cs          # Visualization and interaction
+│   └── BoneOverlaySettings.cs          # ScriptableObject (future use)
+├── doc/
+│   ├── README_en.md                    # English documentation
+│   ├── README_ja.md                    # Japanese documentation
+│   ├── QuickStart_en.md               # English quick start
+│   ├── QuickStart_ja.md               # Japanese quick start
+│   └── TechnicalSpecs.md              # This file
+└── CLAUDE.md                          # AI assistant guidance
 ```
 
 ## Key Features
@@ -39,10 +47,15 @@ BoneOverlay/
 
 ### Rendering System
 
+#### Visual Representation
+- **Disc Markers**: Uses `Handles.DrawSolidDisc` for better visibility than spheres
+- **Direction Calculation**: Discs face camera for consistent appearance
+- **Dynamic Sizing**: Size scales based on distance for better usability
+
 #### Distance-Based Filtering
-- Separate distances for bones and labels
-- Smooth alpha fading at distance boundaries
-- Frustum culling optimization
+- Separate distances for bones (default: 50m) and labels (default: 30m)
+- Smooth alpha fading at distance boundaries (20% of max distance)
+- Frustum culling optimization using `GeometryUtility.TestPlanesAABB`
 
 #### Screen Space Calculation
 ```csharp
@@ -57,9 +70,10 @@ screenRadius = state.SphereSize * pixelsPerUnit;
 ```
 
 #### Interactive Elements
-- Sphere click detection using screen-space radius
-- Label rendering with GUI.Button for click handling
-- Hover state management
+- Disc click detection using accurate screen-space radius calculation
+- Label rendering with `GUI.Label` in `Handles.BeginGUI/EndGUI` block
+- Hover state management with visual feedback
+- Multi-selection support with proper state synchronization (fixed in v1.0.1)
 
 ### Performance Optimizations
 
@@ -156,18 +170,41 @@ Settings are stored using EditorPrefs with the prefix `ExtEditor.BoneOverlay.`:
 - macOS ✓
 - Linux ✓
 
-## Known Limitations
+## Known Issues (Fixed)
 
-1. **Editor Only**: No runtime support
+### v1.0.1 Fixes
+- ✓ **Multi-Selection Bug**: Fixed incorrect object type in selection removal
+- ✓ **Selection Sync**: Improved synchronization between Hierarchy and visual state
+- ✓ **Visual Feedback**: Added immediate repaint after selection changes
+
+## Current Limitations
+
+1. **Editor Only**: No runtime support (by design)
 2. **Fixed Patterns**: Bone name patterns not yet customizable via UI
 3. **No Filtering**: Cannot exclude specific bones
 4. **Single Scene**: Works only in active Scene View
+5. **No Batch Operations**: Cannot rename or modify multiple bones at once
 
 ## Future Enhancements
 
+### High Priority
 1. **Preset System**: Save/load configurations
-2. **Bone Filtering**: Include/exclude specific bones
-3. **Custom Patterns**: User-defined detection patterns
-4. **Bone Groups**: Color-code bone chains
-5. **Weight Visualization**: Show vertex weights
-6. **Animation Preview**: Visualize bone movement
+2. **Bone Filtering**: Include/exclude specific bones or hierarchies
+3. **Custom Patterns**: User-defined bone detection patterns
+
+### Medium Priority
+4. **Bone Groups**: Color-code bone chains by type
+5. **Batch Operations**: Rename, recolor multiple bones
+6. **Export/Import**: Settings as JSON
+
+### Low Priority
+7. **Weight Visualization**: Show vertex weights
+8. **Animation Preview**: Visualize bone movement
+9. **Performance Metrics**: Display render time statistics
+
+## Debug Features
+
+Enable debug mode by adding `BONE_OVERLAY_DEBUG` to Scripting Define Symbols:
+- Logs selection operations to Console
+- Helps diagnose selection issues
+- No performance impact when disabled
