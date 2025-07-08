@@ -169,6 +169,12 @@ namespace ExtEditor.BoneOverlay
                 var detectedBones = detector.DetectBones();
                 dropdownMenu.AddSeparator("");
                 dropdownMenu.AddDisabledItem($"Detected Bones: {detectedBones.Count}", false);
+                
+                // 除外されたボーン数を表示
+                if (detector.ExcludedBonesCount > 0)
+                {
+                    dropdownMenu.AddDisabledItem($"Excluded (Hidden/Locked): {detector.ExcludedBonesCount}", false);
+                }
             }
             
             // Show the dropdown

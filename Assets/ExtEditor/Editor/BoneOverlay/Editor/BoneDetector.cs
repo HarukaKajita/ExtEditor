@@ -11,6 +11,9 @@ namespace ExtEditor.BoneOverlay
         private HashSet<Transform> cachedBones;
         private int lastFrameCount = -1;
         
+        // 除外されたボーンの数を追跡
+        public int ExcludedBonesCount { get; private set; }
+        
         public class BoneInfo
         {
             public Transform Transform { get; set; }
@@ -50,6 +53,7 @@ namespace ExtEditor.BoneOverlay
             lastFrameCount = Time.frameCount;
             cachedBones.Clear();
             boneInfoCache.Clear();
+            ExcludedBonesCount = 0;  // 除外カウントをリセット
             
             // シーン内の全てのGameObjectを取得
             var allTransforms = Object.FindObjectsOfType<Transform>();
@@ -64,6 +68,13 @@ namespace ExtEditor.BoneOverlay
                     {
                         if (bone != null)
                         {
+                            // 非表示または選択不可のボーンをチェック
+                            if (IsExcludedBone(bone))
+                            {
+                                ExcludedBonesCount++;
+                                continue;
+                            }
+                            
                             cachedBones.Add(bone);
                             MarkBoneHierarchy(bone, true, false);
                         }
@@ -93,6 +104,13 @@ namespace ExtEditor.BoneOverlay
                 foreach (var transform in allTransforms)
                 {
                     if (transform == null) continue;
+                    
+                    // 除外されるボーンはスキップ
+                    if (IsExcludedBone(transform))
+                    {
+                        ExcludedBonesCount++;
+                        continue;
+                    }
                     
                     string lowerName = transform.name.ToLower();
                     foreach (var pattern in state.BoneNamePatterns)
@@ -125,7 +143,7 @@ namespace ExtEditor.BoneOverlay
         
         private void MarkBoneHierarchy(Transform bone, bool isSkinnedMeshBone, bool isAnimatorBone)
         {
-            if (bone == null) return;
+            if (bone == null || IsExcludedBone(bone)) return;
             
             if (!boneInfoCache.ContainsKey(bone))
             {
@@ -146,22 +164,26 @@ namespace ExtEditor.BoneOverlay
             // 親も含める（ルートまで）
             if (bone.parent != null && !cachedBones.Contains(bone.parent))
             {
-                bool shouldIncludeParent = false;
-                
-                // 親が他の子ボーンを持っているかチェック
-                foreach (Transform sibling in bone.parent)
+                // 親が除外対象でないかチェック
+                if (!IsExcludedBone(bone.parent))
                 {
-                    if (sibling != bone && cachedBones.Contains(sibling))
+                    bool shouldIncludeParent = false;
+                    
+                    // 親が他の子ボーンを持っているかチェック
+                    foreach (Transform sibling in bone.parent)
                     {
-                        shouldIncludeParent = true;
-                        break;
+                        if (sibling != bone && cachedBones.Contains(sibling))
+                        {
+                            shouldIncludeParent = true;
+                            break;
+                        }
                     }
-                }
-                
-                if (shouldIncludeParent)
-                {
-                    cachedBones.Add(bone.parent);
-                    MarkBoneHierarchy(bone.parent, false, false);
+                    
+                    if (shouldIncludeParent)
+                    {
+                        cachedBones.Add(bone.parent);
+                        MarkBoneHierarchy(bone.parent, false, false);
+                    }
                 }
             }
         }
@@ -177,6 +199,13 @@ namespace ExtEditor.BoneOverlay
                 var bone = animator.GetBoneTransform(humanBone);
                 if (bone != null)
                 {
+                    // 除外チェック
+                    if (IsExcludedBone(bone))
+                    {
+                        ExcludedBonesCount++;
+                        continue;
+                    }
+                    
                     cachedBones.Add(bone);
                     MarkBoneHierarchy(bone, false, true);
                 }
@@ -193,6 +222,13 @@ namespace ExtEditor.BoneOverlay
             {
                 if (t.childCount > 0 && state != null && state.BoneNamePatterns != null)
                 {
+                    // 除外チェック
+                    if (IsExcludedBone(t))
+                    {
+                        ExcludedBonesCount++;
+                        continue;
+                    }
+                    
                     string lowerName = t.name.ToLower();
                     foreach (var pattern in state.BoneNamePatterns)
                     {
@@ -239,6 +275,21 @@ namespace ExtEditor.BoneOverlay
             }
             
             return depth;
+        }
+        
+        private bool IsExcludedBone(Transform bone)
+        {
+            if (bone == null || bone.gameObject == null) return true;
+            
+            // 非表示のボーンを除外
+            if (SceneVisibilityManager.instance.IsHidden(bone.gameObject, true))
+                return true;
+            
+            // 選択不可のボーンを除外
+            if (SceneVisibilityManager.instance.IsPickingDisabled(bone.gameObject, true))
+                return true;
+            
+            return false;
         }
         
         public void ClearCache()
