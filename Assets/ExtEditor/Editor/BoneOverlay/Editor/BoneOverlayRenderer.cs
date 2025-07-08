@@ -33,7 +33,6 @@ namespace ExtEditor.BoneOverlay
             if (camera == null) return;
             
             var cameraPos = camera.transform.position;
-            var cameraForward = camera.transform.forward;
             
             // 距離キャッシュを更新
             UpdateDistanceCache(bones, cameraPos);
