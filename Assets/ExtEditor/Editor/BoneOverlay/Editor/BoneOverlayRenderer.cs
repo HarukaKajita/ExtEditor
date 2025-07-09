@@ -37,10 +37,15 @@ namespace ExtEditor.BoneOverlay
             // 距離キャッシュを更新
             UpdateDistanceCache(bones, cameraPos);
             
+            // ボーンを距離でソート（遠い順）
+            var sortedBones = bones.OrderByDescending(b => 
+                boneDistanceCache.TryGetValue(b.Transform, out float d) ? d : float.MaxValue
+            ).ToList();
+            
             // マウス位置取得
             var mousePos = Event.current.mousePosition;
             Transform closestBone = null;
-            float closestDistance = float.MaxValue;
+            float closestDepth = float.MaxValue;
             
             // ラベルクリックの結果をリセット
             clickedLabelBone = null;
@@ -48,7 +53,7 @@ namespace ExtEditor.BoneOverlay
             // ボーンの描画とインタラクション
             var labelsToRender = new List<(Transform bone, Color color)>();
             
-            foreach (var boneInfo in bones)
+            foreach (var boneInfo in sortedBones)
             {
                 var bone = boneInfo.Transform;
                 if (bone == null) continue;
@@ -95,9 +100,11 @@ namespace ExtEditor.BoneOverlay
                     var screenPos = new Vector2(screenPosAndSize.Value.x, screenPosAndSize.Value.y);
                     var screenRadius = screenPosAndSize.Value.z;
                     float screenDistance = Vector2.Distance(mousePos, screenPos);
-                    if (screenDistance < screenRadius && screenDistance < closestDistance)
+                    
+                    // マウスが円の範囲内にあり、かつ最も手前（カメラに近い）の場合
+                    if (screenDistance < screenRadius && distance < closestDepth)
                     {
-                        closestDistance = screenDistance;
+                        closestDepth = distance;
                         closestBone = bone;
                     }
                 }
