@@ -51,7 +51,6 @@ BoneOverlayツールは、Unity SceneViewでジョイント（ボーン）を可
 - **BoneOverlayState.cs**: 設定の永続化（EditorPrefs使用）
 - **BoneDetector.cs**: ボーン検出ロジック
 - **BoneOverlayRenderer.cs**: Gizmo描画とインタラクション
-- **BoneOverlaySettings.cs**: 将来の拡張用ScriptableObject
 - **BoneOverlay_Legacy.cs**: 旧Overlayベース実装（無効化）
 
 ### アーキテクチャ特徴
@@ -122,9 +121,22 @@ BoneOverlayツールは、Unity SceneViewでジョイント（ボーン）を可
   - OrderByDescendingを使用した効率的なソート
 - **選択優先度の改善**: 同じスクリーン位置のボーンで手前を優先
   - closestDepth変数を追加して深度を追跡
-  - スクリーン距離が同じ場合はカメラから近いボーンを選択
-  - Mathf.Approximatelyを使用して浮動小数点の比較を安全に実施
+  - スクリーン距離での選択を廃止し、円内の最も手前のボーンを選択
 - **矩形選択機能の削除**: Unity標準機能との競合回避のため削除
+
+### 2025-01-09 更新 - パフォーマンス最適化とコード品質改善
+- **パフォーマンス最適化**:
+  - 視錐台平面の計算をフレーム単位でキャッシュ
+  - GUIStyleをstaticフィールドで再利用（毎フレーム生成を回避）
+  - ソート処理をカメラ移動時のみ実行
+  - Repaint呼び出しをホバー状態変化時のみに制限
+- **コード品質改善**:
+  - labelColorのデフォルトアルファを1.0に修正（以前は0で透明）
+  - 常にtrueだったEnableDistanceFilterプロパティを削除
+  - 未使用のBoneOverlaySettingsクラスを削除
+- **ユーザビリティ改善**:
+  - 空クリックでの選択解除実装
+  - ツールバーオーバーレイに適切な名前を設定
 
 ## 現在の課題
 
@@ -139,7 +151,8 @@ BoneOverlayツールは、Unity SceneViewでジョイント（ボーン）を可
 - **プリセット機能**: 設定の保存/読み込み
 - **ローカライゼーション**: 日本語/英語切り替え
 - **アニメーション対応**: 再生中のボーン追従
-- **矩形選択の責任分離**: HandleInputを頂点メソッドとフラグでのクォーターメソッドに分割
+- **DrawBonesメソッドの分割**: 155行の巨大メソッドを機能別に分割
+- **設定保存のバッチ化**: プロパティ変更時の頻繁なEditorPrefs保存を最適化
 
 ## 開発ノート
 

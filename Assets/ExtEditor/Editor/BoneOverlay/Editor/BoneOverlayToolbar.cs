@@ -4,7 +4,7 @@ using UnityEngine;
 
 namespace ExtEditor.BoneOverlay
 {
-    [Overlay(typeof(SceneView), "", true)]
+    [Overlay(typeof(SceneView), "Bone Overlay Toolbar", true)]
     [Icon("Icons/d_AvatarMask Icon")]
     public class BoneOverlayToolbar : ToolbarOverlay
     {

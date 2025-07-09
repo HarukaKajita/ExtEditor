@@ -16,6 +16,16 @@ namespace ExtEditor.BoneOverlay
         // ラベルインタラクション用
         private Transform clickedLabelBone = null;
         
+        // パフォーマンス最適化用キャッシュ
+        private Plane[] frustumPlanes;
+        private int lastFrustumUpdateFrame = -1;
+        private Vector3 lastCameraPos;
+        private Quaternion lastCameraRot;
+        private static GUIStyle labelStyle;
+        private List<BoneDetector.BoneInfo> sortedBonesCache;
+        private bool needsSort = true;
+        private Transform previousHoveredBone;
+        
         public BoneOverlayRenderer(BoneOverlayState state, BoneDetector detector)
         {
             this.state = state;
@@ -37,10 +47,16 @@ namespace ExtEditor.BoneOverlay
             // 距離キャッシュを更新
             UpdateDistanceCache(bones, cameraPos);
             
-            // ボーンを距離でソート（遠い順）
-            var sortedBones = bones.OrderByDescending(b => 
-                boneDistanceCache.TryGetValue(b.Transform, out float d) ? d : float.MaxValue
-            ).ToList();
+            // カメラが移動した場合のみソートを実行
+            if (needsSort || sortedBonesCache == null || sortedBonesCache.Count != bones.Count)
+            {
+                sortedBonesCache = bones.OrderByDescending(b => 
+                    boneDistanceCache.TryGetValue(b.Transform, out float d) ? d : float.MaxValue
+                ).ToList();
+                needsSort = false;
+            }
+            
+            var sortedBones = sortedBonesCache;
             
             // マウス位置取得
             var mousePos = Event.current.mousePosition;
@@ -63,11 +79,9 @@ namespace ExtEditor.BoneOverlay
                 if (!boneDistanceCache.TryGetValue(bone, out distance))
                     continue;
                 
-                if (state.EnableDistanceFilter)
-                {
-                    if (distance < state.MinRenderDistance || distance > state.MaxRenderDistance)
-                        continue;
-                }
+                // 距離フィルタリング（常に有効）
+                if (distance < state.MinRenderDistance || distance > state.MaxRenderDistance)
+                    continue;
                 
                 // 視錐台カリング
                 if (!IsInViewFrustum(camera, bone.position))
@@ -75,7 +89,7 @@ namespace ExtEditor.BoneOverlay
                 
                 // フェード計算
                 float alpha = 1.0f;
-                if (state.EnableDistanceFilter && state.DistanceFadeEnabled)
+                if (state.DistanceFadeEnabled)
                 {
                     float fadeRange = state.MaxRenderDistance * 0.2f;
                     alpha = Mathf.Clamp01((state.MaxRenderDistance - distance) / fadeRange);
@@ -147,10 +161,11 @@ namespace ExtEditor.BoneOverlay
             // クリック処理
             HandleMouseInteraction(closestBone);
             
-            // 常に再描画をリクエスト（アニメーションやインタラクションのため）
-            if (state.IsEnabled)
+            // ホバー状態が変わった、またはマウスが動いている時のみ再描画
+            if (state.IsEnabled && (hoveredBone != previousHoveredBone || Event.current.type == EventType.MouseMove))
             {
                 sceneView.Repaint();
+                previousHoveredBone = hoveredBone;
             }
         }
         
@@ -160,6 +175,13 @@ namespace ExtEditor.BoneOverlay
                 return;
                 
             lastFrameCount = Time.frameCount;
+            
+            // カメラ位置が変わった場合はソートが必要
+            if (lastCameraPos != cameraPos)
+            {
+                needsSort = true;
+            }
+            
             boneDistanceCache.Clear();
             
             foreach (var boneInfo in bones)
@@ -174,8 +196,17 @@ namespace ExtEditor.BoneOverlay
         
         private bool IsInViewFrustum(Camera camera, Vector3 position)
         {
-            var planes = GeometryUtility.CalculateFrustumPlanes(camera);
-            return GeometryUtility.TestPlanesAABB(planes, new Bounds(position, Vector3.one * 0.1f));
+            // 視錐台平面をフレーム単位でキャッシュ
+            if (frustumPlanes == null || lastFrustumUpdateFrame != Time.frameCount || 
+                lastCameraPos != camera.transform.position || lastCameraRot != camera.transform.rotation)
+            {
+                frustumPlanes = GeometryUtility.CalculateFrustumPlanes(camera);
+                lastFrustumUpdateFrame = Time.frameCount;
+                lastCameraPos = camera.transform.position;
+                lastCameraRot = camera.transform.rotation;
+            }
+            
+            return GeometryUtility.TestPlanesAABB(frustumPlanes, new Bounds(position, Vector3.one * 0.1f));
         }
         
         private Color GetBoneColor(Transform bone)
@@ -269,12 +300,17 @@ namespace ExtEditor.BoneOverlay
             // ラベル位置を少しオフセット
             var labelPos = bone.position + camera.transform.up * state.SphereSize;
             
-            // ラベルのスタイルを作成
-            var style = new GUIStyle("Label");
-            style.fontSize = Mathf.RoundToInt(state.LabelSize);
-            style.normal.textColor = color;
-            style.alignment = TextAnchor.LowerLeft;
-            style.padding = new RectOffset(4, 4, 2, 2);
+            // ラベルのスタイルを再利用
+            if (labelStyle == null)
+            {
+                labelStyle = new GUIStyle("Label");
+                labelStyle.alignment = TextAnchor.LowerLeft;
+                labelStyle.padding = new RectOffset(4, 4, 2, 2);
+            }
+            
+            // 動的なプロパティのみ更新
+            labelStyle.fontSize = Mathf.RoundToInt(state.LabelSize);
+            labelStyle.normal.textColor = color;
             
             // コンテンツを作成
             var content = new GUIContent(bone.name);
@@ -287,7 +323,7 @@ namespace ExtEditor.BoneOverlay
             if (screenPos.z > 0)
             {
                 var guiPoint = new Vector2(screenPos.x, camera.pixelHeight - screenPos.y);
-                var size = style.CalcSize(content);
+                var size = labelStyle.CalcSize(content);
                 var rect = new Rect(guiPoint.x - size.x * 0.5f, guiPoint.y - size.y * 0.5f, size.x, size.y);
                 
                 // 左クリックのみを検出
@@ -301,7 +337,7 @@ namespace ExtEditor.BoneOverlay
                 // ラベルを描画
                 var oldContentColor = GUI.contentColor;
                 GUI.contentColor = color;
-                GUI.Label(rect, content, style);
+                GUI.Label(rect, content, labelStyle);
                 GUI.contentColor = oldContentColor;
             }
             
@@ -310,36 +346,42 @@ namespace ExtEditor.BoneOverlay
         
         private void HandleMouseInteraction(Transform closestBone)
         {
-            if (closestBone == null) return;
-            
             var evt = Event.current;
             
-            if (evt.type == EventType.MouseDown && evt.button == 0 || evt.type == EventType.Used && evt.button == 0)
+            if (evt.type == EventType.MouseDown && evt.button == 0)
             {
-                
-                // シングルクリック: 選択
-                if (evt.shift || evt.control || evt.command)
+                if (closestBone != null)
                 {
-                    // 追加選択
-                    var currentSelection = new List<Object>(Selection.gameObjects);
-                    if (currentSelection.Contains(closestBone.gameObject))
+                    // ボーンがある場合の選択処理
+                    if (evt.shift || evt.control || evt.command)
                     {
-                        currentSelection.Remove(closestBone.gameObject);
+                        // 追加選択
+                        var currentSelection = new List<Object>(Selection.gameObjects);
+                        if (currentSelection.Contains(closestBone.gameObject))
+                        {
+                            currentSelection.Remove(closestBone.gameObject);
+                        }
+                        else
+                        {
+                            currentSelection.Add(closestBone.gameObject);
+                        }
+                        Selection.objects = currentSelection.ToArray();
                     }
                     else
                     {
-                        currentSelection.Add(closestBone.gameObject);
+                        // 単独選択
+                        Selection.activeGameObject = closestBone.gameObject;
                     }
-                    Selection.objects = currentSelection.ToArray();
+                    evt.Use();
                 }
-                else
+                else if (!evt.shift && !evt.control && !evt.command)
                 {
-                    // 単独選択
-                    Selection.activeGameObject = closestBone.gameObject;
+                    // ボーンがない場合、かつ修飾キーが押されていない場合は選択を解除
+                    Selection.activeGameObject = null;
+                    // 空クリックの場合はイベントを消費しない（Unity標準の動作に任せる）
                 }
-                evt.Use();
                 
-                // 選択変更後に即座に再描画
+                // 選択変更後に再描画（クリック時のみ）
                 SceneView.RepaintAll();
             }
         }

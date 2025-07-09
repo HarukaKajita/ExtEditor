@@ -12,7 +12,6 @@ namespace ExtEditor.BoneOverlay
         // 基本設定
         private bool isEnabled = false;
         private bool showOptions = false;
-        private bool enableDistanceFilter = true;
         private float maxRenderDistance = 50f;
         private float minRenderDistance = 0.1f;
         private bool distanceFadeEnabled = true;
@@ -70,19 +69,6 @@ namespace ExtEditor.BoneOverlay
                 if (showLabels != value)
                 {
                     showLabels = value;
-                    Save();
-                }
-            }
-        }
-        
-        public bool EnableDistanceFilter
-        {
-            get => enableDistanceFilter;
-            set
-            {
-                if (enableDistanceFilter != value)
-                {
-                    enableDistanceFilter = value;
                     Save();
                 }
             }
@@ -247,7 +233,6 @@ namespace ExtEditor.BoneOverlay
         {
             EditorPrefs.SetBool(PREF_KEY_PREFIX + "IsEnabled", isEnabled);
             EditorPrefs.SetBool(PREF_KEY_PREFIX + "ShowOptions", showOptions);
-            EditorPrefs.SetBool(PREF_KEY_PREFIX + "EnableDistanceFilter", enableDistanceFilter);
             EditorPrefs.SetFloat(PREF_KEY_PREFIX + "MaxRenderDistance", maxRenderDistance);
             EditorPrefs.SetFloat(PREF_KEY_PREFIX + "MinRenderDistance", minRenderDistance);
             EditorPrefs.SetBool(PREF_KEY_PREFIX + "DistanceFadeEnabled", distanceFadeEnabled);
@@ -271,7 +256,6 @@ namespace ExtEditor.BoneOverlay
         {
             isEnabled = EditorPrefs.GetBool(PREF_KEY_PREFIX + "IsEnabled", false);
             showOptions = EditorPrefs.GetBool(PREF_KEY_PREFIX + "ShowOptions", false);
-            enableDistanceFilter = EditorPrefs.GetBool(PREF_KEY_PREFIX + "EnableDistanceFilter", true);
             maxRenderDistance = EditorPrefs.GetFloat(PREF_KEY_PREFIX + "MaxRenderDistance", 50f);
             minRenderDistance = EditorPrefs.GetFloat(PREF_KEY_PREFIX + "MinRenderDistance", 0.1f);
             distanceFadeEnabled = EditorPrefs.GetBool(PREF_KEY_PREFIX + "DistanceFadeEnabled", true);
@@ -286,7 +270,7 @@ namespace ExtEditor.BoneOverlay
             selectedColor = LoadColor(PREF_KEY_PREFIX + "SelectedColor", new Color(1f, 1f, 0f, 1f));
             hoverColor = LoadColor(PREF_KEY_PREFIX + "HoverColor", new Color(0f, 1f, 0f, 1f));
             lineColor = LoadColor(PREF_KEY_PREFIX + "LineColor", new Color(0.3f, 0.3f, 0.8f, 0.5f));
-            labelColor = LoadColor(PREF_KEY_PREFIX + "LabelColor", new Color(0.4f,0.7f,1f,0));
+            labelColor = LoadColor(PREF_KEY_PREFIX + "LabelColor", new Color(0.4f,0.7f,1f,1f));
             
             includeEmptyTransforms = EditorPrefs.GetBool(PREF_KEY_PREFIX + "IncludeEmptyTransforms", false);
         }
@@ -313,7 +297,6 @@ namespace ExtEditor.BoneOverlay
         {
             isEnabled = false;
             showOptions = false;
-            enableDistanceFilter = true;
             maxRenderDistance = 50f;
             minRenderDistance = 0.1f;
             distanceFadeEnabled = true;
@@ -328,7 +311,7 @@ namespace ExtEditor.BoneOverlay
             selectedColor = new Color(1f, 1f, 0f, 1f);
             hoverColor = new Color(0f, 1f, 0f, 1f);
             lineColor = new Color(0.3f, 0.3f, 0.8f, 0.5f);
-            labelColor = new Color(0.4f, 0.7f, 1f, 0);
+            labelColor = new Color(0.4f, 0.7f, 1f, 1f);
             
             includeEmptyTransforms = false;
             
